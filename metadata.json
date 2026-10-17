@@ -1,0 +1,8 @@
+{
+  "name": "Parishkar",
+  "description": "Civic accountability platform for West Bengal. Live public map of civic issues, problem reporting with GPS and camera, ward rankings, community verification, and public accountability records.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
