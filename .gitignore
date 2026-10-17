@@ -1,0 +1,23 @@
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Dependencies (tests install imagescript locally)
+node_modules/
+dist/
+.aistudio/
+bun.lock
+
+# Script caches
+tools/data/.wbme-cache/
+tools/data/.in-cache/
+tools/data/.mp-cache/

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="theme-init.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parishkar — Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23DD3333' stroke-width='1.5'/%3E%3C/svg%3E">
+<script>
+// This page must never depend on a service worker (it's an internal tool, always used
+// online) and must never fail silently. Both run before anything else on the page.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(() => {});
+}
+(function () {
+  function show(msg) {
+    var box = document.getElementById('adBoot');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'adBoot';
+      box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#3a1210;color:#ffb4ac;' +
+        'font:12px/1.5 monospace;padding:.8rem 1rem;white-space:pre-wrap;word-break:break-word;';
+      document.documentElement.appendChild(box);
+    }
+    box.textContent = 'Page error — screenshot this and send it: ' + msg;
+  }
+  window.addEventListener('error', function (e) { show(e.message || String(e.error || e)); });
+  window.addEventListener('unhandledrejection', function (e) { show((e.reason && (e.reason.message || e.reason)) || String(e.reason)); });
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="stylesheet" href="kasa.css">
+<style>
+.ad-reason{max-width:34rem;width:calc(100% - 2rem);background:var(--ink,#0a0805);color:var(--cream,#f2e9da);border:1px solid var(--border);border-radius:6px;padding:1.2rem;}
+.ad-reason::backdrop{background:rgba(0,0,0,.6);}
+.ad-reason textarea{width:100%;margin:.6rem 0;font:inherit;padding:.5rem;}
+.ad-reason-saved{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem;}
+.ad-reason-saved span{display:inline-flex;border:1px solid var(--border);border-radius:4px;}
+.ad-reason-saved button{background:none;border:0;color:inherit;padding:.35rem .5rem;cursor:pointer;text-align:left;}
+.ad-reason menu{display:flex;justify-content:flex-end;gap:.6rem;padding:0;margin:.6rem 0 0;}
+.ad-reason menu .ad-btn{width:auto;min-height:0;padding:.6rem 1rem;}
+.ad-wrap{max-width:1200px;margin:0 auto;padding:2rem 1.6rem 4rem;}
+.ad-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding-bottom:1.6rem;border-bottom:1px solid var(--border);margin-bottom:2.4rem;}
+.ad-sub{font-family:var(--mono);font-size:11px;color:var(--text-lo);letter-spacing:.14em;text-transform:uppercase;margin-top:.4rem;}
+.ad-refresh{padding:.6rem 1.1rem;background:var(--amber);color:var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;border-radius:3px;transition:all .2s;}
+.ad-refresh:hover{background:var(--amber2);}
+.ad-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2.4rem;}
+@media(max-width:900px){.ad-grid{grid-template-columns:repeat(2,1fr);}}
+.ad-card{background:rgba(221,51,51,.03);border:1px solid var(--border);border-radius:4px;padding:1.4rem 1.2rem;}
+.ad-card-label{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-lo);margin-bottom:.6rem;}
+.ad-card-value{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--amber);line-height:1;letter-spacing:-.02em;}
+.ad-card-sub{font-family:var(--mono);font-size:11px;color:var(--text-md);margin-top:.5rem;}
+.ad-section{margin-bottom:3rem;}
+.ad-section-title{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--cream);margin-bottom:1.2rem;letter-spacing:-.01em;}
+.ad-section-title::before{content:"— ";color:var(--amber);}
+.ad-table{width:100%;border-collapse:collapse;font-size:.92rem;}
+.ad-table th{text-align:left;padding:.8rem 1rem;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-lo);border-bottom:1px solid var(--border);font-weight:500;}
+.ad-table td{padding:.9rem 1rem;border-bottom:1px solid rgba(221,51,51,.08);color:var(--text-hi);}
+.ad-table tr:hover td{background:rgba(221,51,51,.03);}
+.ad-table .num{font-family:var(--mono);text-align:right;}
+.ad-table .amber{color:var(--amber);font-weight:500;}
+.ad-table .green{color:var(--green);}
+.ad-table .red{color:var(--red);}
+.ad-bars{display:flex;flex-direction:column;gap:.6rem;}
+.ad-bar-row{display:grid;grid-template-columns:5rem 1fr 3rem;gap:1rem;align-items:center;font-family:var(--mono);font-size:11px;}
+.ad-bar-label{color:var(--text-md);letter-spacing:.08em;}
+.ad-bar-track{height:6px;background:rgba(221,51,51,.1);border-radius:3px;overflow:hidden;}
+.ad-bar-fill{height:100%;background:var(--amber);border-radius:3px;transition:width .8s cubic-bezier(.2,.7,.3,1);}
+.ad-bar-value{color:var(--amber);text-align:right;}
+.ad-loading{padding:3rem 1rem;text-align:center;font-family:var(--mono);font-size:12px;color:var(--text-lo);letter-spacing:.14em;text-transform:uppercase;}
+.ad-empty{padding:2rem 1rem;text-align:center;color:var(--text-lo);font-size:.9rem;background:rgba(221,51,51,.02);border:1px dashed var(--border);border-radius:4px;}
+.ad-login{max-width:400px;margin:6rem auto;padding:2.4rem 2rem;background:var(--ink2);border:1px solid var(--border2);border-radius:6px;text-align:center;}
+.ad-login-sub{font-size:.88rem;color:var(--text-md);margin-bottom:1.6rem;line-height:1.6;}
+.ad-input{width:100%;padding:.9rem 1rem;background:rgba(var(--cream-rgb),.03);border:1px solid var(--border);color:var(--cream);font-family:var(--serif);font-size:1rem;outline:none;border-radius:4px;margin-bottom:1rem;}
+.ad-input:focus{border-color:var(--amber);}
+.ad-btn{-webkit-appearance:none;appearance:none;display:block;min-height:48px;border:0;width:100%;padding:1rem;background:#DD3333;background:var(--amber,#DD3333);color:#0a0805;color:var(--ink,#0a0805);-webkit-text-fill-color:currentColor;opacity:1;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;border-radius:4px;transition:all .2s;}
+.ad-btn:hover{background:var(--amber2);}
+.ad-error{color:var(--red);font-size:.82rem;margin-top:.8rem;}
+.hidden{display:none!important;}
+.ad-sub-title{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin:1.6rem 0 .8rem;}
+.ad-item{background:rgba(221,51,51,.03);border:1px solid var(--border);border-radius:6px;padding:1.1rem;margin-bottom:1rem;}
+.ad-item-head{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:flex-start;}
+.ad-item-title{font-family:var(--serif);font-size:1.05rem;color:var(--cream);}
+.ad-item-meta{font-family:var(--mono);font-size:11px;color:var(--text-lo);margin-top:.3rem;line-height:1.6;}
+.ad-trust{margin-top:.5rem;font-family:var(--mono);font-size:11px;color:var(--text-md);}
+.ad-trust summary{cursor:pointer;display:inline-block;padding:.15rem .5rem;border:1px solid currentColor;border-radius:3px;}
+.ad-trust ul{margin:.4rem 0 .2rem 1rem;padding:0;line-height:1.6;}
+.ad-trust b{display:inline-block;min-width:2.6em;}
+.ad-trust-hi summary{color:#7fbf7f;} .ad-trust-mid summary{color:#d4a72a;} .ad-trust-lo summary{color:#e07a5f;}
+.ad-actions{display:flex;gap:.4rem;flex-wrap:wrap;}
+.ad-actions button{padding:.5rem .8rem;border-radius:3px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;}
+#adEvidence button,#adEvidence summary.ad-ev{padding:.45rem .7rem;border-radius:3px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;border:1px solid var(--border);background:none;color:var(--cream);cursor:pointer;}
+#adEvidence input,#adEvidence select,#adEvidence textarea{background:var(--ink);color:var(--text-hi);border:1px solid var(--border);border-radius:3px;padding:.4rem;font:inherit;}
+.ad-ok{background:rgba(109,184,138,.15);color:var(--green);} .ad-bad{background:rgba(232,82,74,.15);color:var(--red);}
+.ad-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.6rem;margin-top:.9rem;}
+.ad-photos figure{margin:0;} .ad-photos img{width:100%;height:130px;object-fit:cover;border-radius:4px;border:1px solid var(--border);}
+.ad-photos figcaption{font-family:var(--mono);font-size:10px;line-height:1.5;color:var(--text-md);margin-top:.3rem;}
+.ad-photos figcaption button{margin-left:.4rem;}
+.ad-held img{outline:2px solid var(--amber);outline-offset:1px;}
+.ad-photos figcaption [data-clear-vote]{color:var(--green);}
+.ad-photos figcaption button{color:var(--red);font-family:var(--mono);font-size:10px;}
+/* Moderation: count tiles, Waiting / Hidden / Kept tabs, thumb-sized buttons on phones */
+.ad-mod-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1rem;}
+.ad-mod-tile{border:1px solid var(--border);border-radius:6px;padding:.8rem .9rem;background:rgba(221,51,51,.03);}
+.ad-mod-tile b{display:block;font-family:var(--serif);font-size:1.7rem;line-height:1;color:var(--cream);}
+.ad-mod-tile span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-md);}
+.ad-mod-tile.warn b{color:var(--amber);} .ad-mod-tile.bad b{color:var(--red);} .ad-mod-tile.good b{color:var(--green);}
+.ad-tabs{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:1px solid var(--border);}
+.ad-tabs button{padding:.6rem .9rem;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-md);border-bottom:2px solid transparent;}
+.ad-tabs button[aria-selected="true"]{color:var(--amber);border-bottom-color:var(--amber);}
+@media(max-width:640px){
+  .ad-mod-tiles{grid-template-columns:repeat(2,1fr);}
+  .ad-item .ad-actions{width:100%;}
+  .ad-item .ad-actions button{flex:1 1 45%;padding:.8rem .6rem;font-size:12px;}
+  .ad-item .ad-actions select{flex:1 1 100%;}
+}
+.ad-form{display:grid;gap:.7rem;max-width:640px;}
+.ad-form .ad-input{margin-bottom:0;}
+.ad-form textarea.ad-input{min-height:120px;resize:vertical;}
+.ad-note{font-size:.85rem;color:var(--text-md);line-height:1.6;margin-bottom:1rem;}
+</style>
+</head>
+<body>
+
+<div id="adLogin" class="ad-login">
+  <div class="k-wordmark-lg">
+    <span class="k-mark" aria-hidden="true"></span>
+    <span class="k-wordmark"><span class="k-wordmark-first">Parishkar</span></span>
+  </div>
+  <div class="k-section-num" style="text-align:center;">Admin</div>
+  <div class="ad-login-sub">Sign in with your admin account.</div>
+  <!-- A real form, so the keyboard's Go/Enter key signs in even if the button is off-screen. -->
+  <form id="adLoginForm" novalidate>
+    <input type="email" id="adEmail" class="ad-input" placeholder="Email" autocomplete="username" inputmode="email" autocapitalize="off">
+    <input type="password" id="adPassword" class="ad-input" placeholder="Password" autocomplete="current-password" enterkeyhint="go">
+    <button type="submit" class="ad-btn" id="adLoginBtn">Continue →</button>
+  </form>
+  <!-- Opened from a team invite link: choose a password, then straight into the dashboard. -->
+  <form id="adSetPwForm" class="hidden" novalidate>
+    <div class="ad-login-sub" id="adSetPwNote">Welcome to the team. Choose a password for next time.</div>
+    <input type="password" id="adNewPassword" class="ad-input" placeholder="New password (8 or more characters)" autocomplete="new-password" minlength="8">
+    <button type="submit" class="ad-btn" id="adSetPwBtn">Save password →</button>
+  </form>
+  <div class="ad-error" id="adError"></div>
+</div>
+
+<div id="adDash" class="ad-wrap hidden">
+  <header class="ad-header">
+    <div>
+      <a href="kasa.html" class="k-wordmark" aria-label="Parishkar" style="font-size:1.8rem;">
+        <span class="k-mark" aria-hidden="true"></span>
+        <span class="k-wordmark-first">Parishkar</span>
+      </a>
+      <div class="k-section-num" style="margin:.3rem 0 0;">Admin</div>
+      <div class="ad-sub" id="adTimestamp">—</div>
+    </div>
+    <div>
+      <button class="ad-refresh" id="adRefreshBtn">↻ Refresh</button>
+      <button class="ad-refresh" id="adSignout" style="background:rgba(232,82,74,.15);color:var(--red);margin-left:.5rem;">Sign out</button>
+    </div>
+  </header>
+
+  <div class="ad-grid" id="adOverview"><div class="ad-loading">Loading…</div></div>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Moderation queue</h2>
+    <p class="ad-note" id="adModNote"></p>
+    <div class="ad-mod-tiles" id="adModTiles"></div>
+    <div class="ad-tabs" role="tablist" aria-label="Moderation">
+      <button type="button" role="tab" data-modtab="waiting" aria-selected="true">Waiting</button>
+      <button type="button" role="tab" data-modtab="hidden" aria-selected="false">Hidden</button>
+      <button type="button" role="tab" data-modtab="kept" aria-selected="false">Kept after review</button>
+    </div>
+    <div id="adResolutions"><div class="ad-loading">Loading…</div></div>
+    <div id="adModOther" hidden></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Find a report</h2>
+    <p class="ad-note">Pick one of the latest reports below, or paste any report's link or ID. You can then hide or restore it, add a note, remove extra photos, and (admins only) delete it for good, for example an exact repeat.</p>
+    <div class="ad-form" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <input class="ad-input" id="adFindInput" placeholder="Report link or ID" style="flex:1;min-width:220px;">
+      <button class="ad-btn" id="adFindBtn" type="button">Find</button>
+    </div>
+    <div id="adFindResult"></div>
+    <div id="adLatest"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section" id="adReplySection" hidden>
+    <h2 class="ad-section-title">Publish an official response (right of reply)</h2>
+    <p class="ad-note">Only publish responses whose sender you have confirmed — for example an email from an official address. The text is published unchanged next to the report and appears in its evidence trail. It does not change the report's status.</p>
+    <form class="ad-form" id="adReplyForm">
+      <input class="ad-input" id="adReplyReport" placeholder="Report link or ID" required>
+      <input class="ad-input" id="adReplyName" placeholder="Name (e.g. Councillor's full name)" required maxlength="120">
+      <input class="ad-input" id="adReplyRole" placeholder="Position (e.g. Councillor, Ward 5)" required maxlength="160">
+      <textarea class="ad-input" id="adReplyBody" placeholder="Their response, exactly as sent" required minlength="10" maxlength="2000"></textarea>
+      <input class="ad-input" id="adReplyNote" placeholder="How you verified it (shown publicly), e.g. Email from the councillor's official address, 25 Sep" maxlength="200">
+      <button class="ad-btn" type="submit">Publish response</button>
+      <div class="ad-error" id="adReplyMsg"></div>
+    </form>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Check repeat reports</h2>
+    <p class="ad-note">The app joins a new report to an earlier one when both are the same kind of problem within 40 m. Machines make mistakes, so please check each pair. <strong>✓ Same</strong>: keep them joined. <strong>✕ Not the same</strong>: the new report becomes its own report again. <strong>🗑 Delete</strong>: remove the repeat photo from the site. Every choice shows on the report's public history. To join two reports the app missed, open one in "Find a report".</p>
+    <div id="adRepeatPhotos"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">West Bengal: how people react</h2>
+    <p class="ad-note">The map works anywhere in West Bengal. It calls itself "Parishkar Kolkata" on a town's wards and "Parishkar Bankura" on a district with no town map. Visits count once per device per place per day. Purulia is the baseline.</p>
+    <div id="adPlaces"><div class="ad-loading">Loading…</div></div>
+    <h3 class="ad-section-title">Towns waiting to go on the map</h3>
+    <p class="ad-note">Sent from <a href="add-town.html" target="_blank" rel="noopener">Put your town on the map</a>. Check the outline looks like the town, and check who is in charge of cleaning against the source given. Drawn maps go live as "provisional, drawn by residents". A fix replaces only the wards it sends.</p>
+    <div id="adTownRequests"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Adopted spots</h2>
+    <p class="ad-note">The public names people gave the spots they look after. Remove a name that is rude, fake or advertising.</p>
+    <div id="adAdoptions"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Dog feeding spots</h2>
+    <p class="ad-note">Spots caregivers registered standing there (dogs.html). Approve a real name at a sensible spot; reject one at a school gate, play area, entrance or staircase (ABC Rules 2023, rule 20). Mark a spot designated only with a link to the local body's, RWA's or Animal Welfare Committee's order, letter or minutes.</p>
+    <div id="adFeeding"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Snake rescuers</h2>
+    <p class="ad-note">People who registered to rescue snakes (snakes.html). Call the number first and approve only if a real person answers and says they rescue snakes; their name and number then go to anyone who reports a snake within their range. Hide a sighting photo that shows no snake or a person's face.</p>
+    <div id="adSnakes"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Puja pandals (Swachh Pandal)</h2>
+    <p class="ad-note">Pandals people added standing there (pandals.html). Approve a real pandal with its real name; reject duplicates, jokes and ads. The puja window decides which reports count; set it each year from the West Bengal government holiday list.</p>
+    <div id="adPandals"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Public works boards</h2>
+    <p class="ad-note">Site boards residents photographed standing at a public work (works.html). Open the photo and approve only if it shows a works board and every field matches what is written on it; reject anything else. The contractor's name must be exactly as on the board.</p>
+    <div id="adWorks"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">School report cards waiting</h2>
+    <p class="ad-note">Residents' pictures of a school's UDISE+ report card with the figures they copied. Open the picture and approve only if every figure matches it; approving makes them the school's official record on the schools page.</p>
+    <div id="adReportCards"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Who's responsible: names waiting</h2>
+    <p class="ad-note">Pradhans, sabhapatis, sabhadhipatis and officers readers added from a place card on the map. Open the source link and approve only if the name is there for that post and place; fix the spelling first if needed. Approved names show on the card with the link.</p>
+    <div id="adOfficials"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Stories behind the numbers</h2>
+    <p class="ad-note">Stories sent from data.html, shown beside a district figure. Open the link: approve only if the story is published there and the person plainly agreed to it being told (they speak for themselves, or the source says they agreed). Reject if it names or pictures a child, or a private person the source does not name. Approved stories are shown unedited; remove one if the person asks or the source goes away.</p>
+    <div id="adStories"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">The record: evidence, cases, remedies</h2>
+    <p class="ad-note">Records for <a href="record.html" target="_blank">record.html</a>. Order: source → document (with SHA-256 if you have the file) → assertion → evidence (page/table locator, supports or contradicts) → harm → entities and links → case → remedy → outcome. Nothing goes public until approved; records naming a person in an official role, or a criminal case, need two different moderators and stay private until the legal gate is opened after legal review. Accept contradicting documents too: they are shown beside the supporting ones. "Outcome checked" needs a live camera photo, document or measurement, never an office's word alone. Editing anything already public asks for a correction note, which is published.</p>
+    <div id="adEvidence"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Leaders' replies waiting</h2>
+    <p class="ad-note">Replies sent from an MLA's or MP's profile ("Reply from this leader"). Open the link and approve only if the leader said this there, on that date. Approving publishes the text unchanged under their profile; you cannot edit it.</p>
+    <div id="adRepReplies"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Figures: corrections waiting</h2>
+    <p class="ad-note">Readers tapped "Suggest a correction" (or a "source?" mark) and say a figure is wrong, out of date or missing its source. Open their link; if it is an authentic source that shows it, fix the page in the repo (or add the source link), then mark it fixed. Reject if the link does not show it. Reply by email when they left one.</p>
+    <div id="adDataFixes"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Bengali wording: fixes waiting</h2>
+    <p class="ad-note">Readers switched on the Bengali-only "Fix translation" toggle and sent a better Bengali version of a line on the site. Approve only if it says the same as the English and reads naturally; edit it first if needed, and keep any {name} and [[1|…]] parts exactly as they are. Approved text replaces the built-in line for everyone.</p>
+    <div id="adTranslations"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Missing schools waiting</h2>
+    <p class="ad-note">Schools residents found that are not on the list, with a live photo of the gate or name board taken there. Check the name in the photo, find the school's UDISE code on Know Your School (kys.udiseplus.gov.in) or the district list, and approve only with that code. If it is already on the list under another name, reject.</p>
+    <div id="adSchoolSuggestions"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">School checks waiting</h2>
+    <p class="ad-note">Held because they were filed from a different block than the school, far from the school's known location, or the photo needs a look. Approve if the photo shows that school.</p>
+    <div id="adSchoolChecks"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Promises waiting for a check</h2>
+    <p class="ad-note">Suggestions for <a href="promises.html" style="color:var(--amber);">Promises</a>. Open each link and publish only if it really shows that person making that promise on that date. A status other than "promised" needs its own evidence link and date. Headlines below are added automatically every morning; hide any that are not about Purulia.</p>
+    <div id="adPromises"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Demands waiting for a check</h2>
+    <p class="ad-note">Posts for the <a href="noticeboard.html" style="color:var(--amber);">Noticeboard</a>. Publish only demands for something the whole area needs, addressed to the right leader, with no insults, slogans or private people's names. Personal problems belong on the Grievance page: reject them. A leader's reply needs a link that really shows them saying it. When a leader commits, add the promise on Promises first, then use "Link to promise".</p>
+    <div id="adDemands"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Website bugs</h2>
+    <p class="ad-note">Sent with the "Report a bug" button on every page. These are problems with the website itself, not civic reports. Each one carries the page, browser and device, and the page's recent error messages. Mark it fixed once the fix is live, or dismiss it.</p>
+    <div id="adBugs"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Volunteer communities</h2>
+    <div id="adCommunities"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section" id="adTeamSection" hidden>
+    <h2 class="ad-section-title">Team (admins only)</h2>
+    <p class="ad-note">Admins can do everything. Moderators can review, hide and restore, but can't delete permanently, see sign-ups or manage the team.
+      Invite gives you a one-time link to send them (WhatsApp or copy). Opening it signs them in and asks for a password. It also works as a password reset for someone already on the team.</p>
+    <form id="adTeamForm" class="ad-actions">
+      <input id="adTeamEmail" type="email" placeholder="Their sign-in email" required aria-label="Email">
+      <select id="adTeamRole" aria-label="Role"><option value="moderator">Moderator</option><option value="admin">Admin</option></select>
+      <button class="ad-ok" type="submit">Invite / change</button>
+    </form>
+    <div id="adInvite" class="ad-note" hidden></div>
+    <div id="adTeam"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section" id="adSignupsSection" hidden>
+    <h2 class="ad-section-title">Join &amp; follow sign-ups</h2>
+    <div id="adSignups"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Letters to offices</h2>
+    <p class="ad-note">Every Monday morning each office with open reports gets this letter by email (Purulia Municipality for town wards, the BDO for a village block); an office with nothing open gets nothing. Office emails are from the district's official Disaster Management Plan 2023-24. Jhalda and Raghunathpur towns are left out (no municipality email on file). Replies come to the moderators. Below: what went out, then this week's letters as they stand now.</p>
+    <div id="adLetterLog"></div>
+    <div id="adLetters"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Daily activity (last 14 days)</h2>
+    <div id="adDaily" class="ad-bars"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Ward performance</h2>
+    <div id="adWards"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">SLA compliance</h2>
+    <div id="adSla"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Storage</h2>
+    <p class="ad-note">Report photos and database size against the Supabase plan (free: 1 GB files, 500 MB database; <a href="https://supabase.com/pricing" target="_blank" rel="noopener" class="amber">pricing</a>). Past the R2 mark, move new photos to Cloudflare R2 (RUNBOOK.md, "Moving photos to R2"). The daily moderator email says so too.</p>
+    <div id="adStorage"><div class="ad-loading">Loading…</div></div>
+  </section>
+
+  <section class="ad-section">
+    <h2 class="ad-section-title">Automation log</h2>
+    <div id="adAutomation"><div class="ad-loading">Loading…</div></div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="city.js"></script>
+<script src="kasa-i18n.js"></script>
+<script src="admin-evidence.js?v=20261014"></script>
+<script src="admin.js?v=20261014"></script>
+</body>
+</html>

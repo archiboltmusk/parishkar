@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="theme-init.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volunteer communities — Parishkar</title>
+<meta name="description" content="Volunteer communities cleaning up and looking after Purulia district: find one near you and join them, or register yours.">
+<meta property="og:title" content="Volunteer communities — Parishkar">
+<meta property="og:description" content="Find a volunteer community near you in Purulia, or register yours.">
+<meta property="og:image" content="https://archiboltmusk.github.io/Purulia/og-bengal.jpg">
+<meta property="og:url" content="https://archiboltmusk.github.io/Purulia/communities.html">
+<link rel="canonical" href="https://archiboltmusk.github.io/Purulia/communities.html">
+<meta name="theme-color" content="#0a0805">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23DD3333' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%23DD3333' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23DD3333'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cnmikcyvyamplbldiivp.supabase.co" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&display=swap"></noscript>
+<link rel="stylesheet" href="kasa.css">
+<style>
+  .cm-wrap{max-width:880px;margin:0 auto;padding:3rem clamp(1rem,4vw,2rem) 8rem;}
+  .cm-title{font-family:var(--serif);font-size:clamp(2.1rem,4.5vw,3.2rem);font-weight:700;color:var(--cream);letter-spacing:-.02em;line-height:1.05;}
+  .cm-title em{font-style:italic;color:var(--amber);}
+  .cm-sub{margin-top:.6rem;color:var(--text-md);line-height:1.6;}
+  .cm-bar{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:space-between;margin:1.8rem 0 1rem;}
+  .cm-count{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-md);}
+  .cm-input,.cm-textarea,.cm-select{width:100%;padding:.75rem .9rem;background:var(--ink2);border:1px solid var(--border);border-radius:8px;color:var(--text-hi);font-family:inherit;font-size:.95rem;outline:none;}
+  .cm-input:focus,.cm-textarea:focus,.cm-select:focus{border-color:var(--amber);}
+  .cm-bar .cm-select{width:auto;min-width:200px;font-family:var(--mono);font-size:12px;}
+  .cm-list{display:grid;gap:1rem;}
+  .cm-card{border:1px solid var(--border);border-radius:14px;padding:1.2rem;background:rgba(221,51,51,.02);min-width:0;}
+  .cm-head{display:flex;gap:1rem;align-items:center;min-width:0;}
+  .cm-logo{flex:none;width:64px;height:64px;border-radius:12px;object-fit:cover;background:var(--ink3);}
+  .cm-name{font-family:var(--serif);font-size:1.3rem;font-weight:700;color:var(--cream);line-height:1.2;overflow-wrap:anywhere;}
+  .cm-where{margin-top:.25rem;font-size:.86rem;color:var(--text-md);}
+  .cm-tag{margin-top:.9rem;color:var(--text-hi);line-height:1.55;overflow-wrap:anywhere;}
+  .cm-about{margin-top:.4rem;font-size:.9rem;color:var(--text-md);line-height:1.55;white-space:pre-line;overflow-wrap:anywhere;}
+  .cm-links{margin-top:.9rem;display:flex;flex-wrap:wrap;gap:.5rem;}
+  .cm-chip{display:inline-flex;align-items:center;gap:.45rem;max-width:100%;padding:.4rem .8rem .4rem .45rem;border:1px solid var(--border2);border-radius:999px;color:var(--text-hi);font-size:.88rem;text-decoration:none;}
+  .cm-chip:hover{border-color:var(--amber);}
+  .cm-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cm-ico{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:rgba(221,51,51,.1);}
+  .cm-ico svg{width:15px;height:15px;}
+  .cm-empty{padding:2.4rem 1.4rem;text-align:center;color:var(--text-lo);font-size:.95rem;border:1px dashed var(--border2);border-radius:14px;line-height:1.6;}
+  .cm-register{position:fixed;left:50%;bottom:4.4rem;transform:translateX(-50%);width:min(840px,calc(100% - 2rem));padding:1rem;border:1px solid var(--border2);border-radius:12px;background:var(--ink);color:var(--cream);font-family:inherit;font-size:1.05rem;font-weight:600;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.35);z-index:20;}
+  .cm-register:hover{border-color:var(--amber);}
+  .cm-dialog{width:min(640px,100%);max-width:100%;max-height:100dvh;margin:auto;padding:0;border:1px solid var(--border2);border-radius:16px;background:var(--ink);color:var(--text-hi);}
+  .cm-dialog::backdrop{background:rgba(0,0,0,.6);}
+  .cm-dhead{position:sticky;top:0;z-index:1;display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;padding:1.2rem 1.3rem;background:var(--ink);border-bottom:1px solid var(--border);}
+  .cm-dhead h2{font-family:var(--serif);font-size:1.6rem;font-weight:700;color:var(--cream);line-height:1.1;}
+  .cm-dhead p{margin-top:.3rem;font-size:.88rem;color:var(--text-md);}
+  .cm-close{background:none;border:0;color:var(--text-md);font-size:1.4rem;cursor:pointer;padding:.2rem .4rem;}
+  .cm-form{padding:0 1.3rem 1.3rem;}
+  .cm-field{margin-top:1.3rem;}
+  .cm-label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-hi);margin-bottom:.35rem;}
+  .cm-label b{color:var(--red);font-weight:400;}
+  .cm-hint{margin:.1rem 0 .5rem;font-size:.84rem;color:var(--text-md);line-height:1.45;}
+  .cm-check{display:flex;gap:.6rem;align-items:flex-start;font-size:.93rem;color:var(--text-hi);line-height:1.45;margin:.4rem 0 .6rem;}
+  .cm-check input{margin-top:.2rem;accent-color:var(--amber);width:18px;height:18px;}
+  .cm-areas{margin-top:.4rem;max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px;}
+  .cm-areas button{display:block;width:100%;text-align:left;padding:.55rem .9rem;background:none;border:0;border-bottom:1px solid var(--border);color:var(--text-hi);font-family:inherit;font-size:.9rem;cursor:pointer;}
+  .cm-areas button:hover{background:rgba(221,51,51,.08);}
+  .cm-picked{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem;}
+  .cm-picked button{padding:.3rem .7rem;border:1px solid var(--amber);border-radius:999px;background:rgba(221,51,51,.12);color:var(--text-hi);font-size:.84rem;cursor:pointer;}
+  .cm-linkrow{margin-top:.5rem;}
+  .cm-addlinks{display:grid;grid-template-columns:repeat(6,1fr);gap:.5rem;margin-top:.6rem;}
+  .cm-addlinks button{display:grid;place-items:center;padding:.7rem 0;border:1px solid var(--border);border-radius:10px;background:var(--ink2);color:var(--text-hi);cursor:pointer;}
+  .cm-addlinks button[hidden]{display:none;}
+  .cm-addlinks svg{width:20px;height:20px;}
+  .cm-logopick{display:flex;align-items:center;gap:1rem;margin-top:.4rem;cursor:pointer;}
+  .cm-logobox{display:grid;place-items:center;width:72px;height:72px;border-radius:14px;background:var(--ink3);overflow:hidden;color:var(--text-md);font-size:1.4rem;}
+  .cm-logobox img{width:100%;height:100%;object-fit:cover;}
+  .cm-sep{margin-top:1.4rem;border:0;border-top:1px solid var(--border);}
+  .cm-review{margin-top:1.2rem;text-align:center;font-size:.86rem;color:var(--text-md);}
+  .cm-actions{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:.9rem;}
+  .cm-actions button{padding:.9rem;border-radius:10px;font-family:inherit;font-size:1rem;font-weight:600;cursor:pointer;}
+  .cm-cancel{background:none;border:1px solid var(--border2);color:var(--text-hi);}
+  .cm-submit{background:var(--amber);border:1px solid var(--amber);color:var(--ink);}
+  .cm-submit:disabled{opacity:.5;cursor:default;}
+  .cm-msg{margin-top:.8rem;font-size:.9rem;line-height:1.5;}
+  .cm-msg.ok{color:var(--green);} .cm-msg.bad{color:var(--red);}
+  .cm-lang{display:flex;gap:.3rem;}
+  .cm-lang button{background:none;border:1px solid var(--border);border-radius:3px;color:var(--text-lo);font-family:var(--mono);font-size:11px;padding:.3rem .5rem;cursor:pointer;}
+  .cm-lang button[aria-pressed="true"]{color:var(--amber);border-color:rgba(221,51,51,.5);}
+  .cm-footer{margin-top:3rem;padding-top:1.6rem;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:1.2rem;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;}
+  .cm-footer a{color:var(--amber);}
+  @media(max-width:520px){.cm-dialog{border-radius:0;height:100dvh;}.cm-addlinks{grid-template-columns:repeat(3,1fr);}}
+</style>
+<script src="bug-report.js"></script>
+<link rel="stylesheet" href="poster.css">
+</head>
+<body>
+
+<nav class="k-nav">
+  <a href="index.html" class="k-nav-logo k-wordmark" aria-label="Parishkar home"><span class="k-mark" aria-hidden="true"></span><span class="k-wordmark-first">Parishkar</span></a>
+  <div class="k-nav-links">
+    <a href="index.html" data-t="nav_home">Home</a>
+    <a href="kasa.html">Parishkar</a>
+  </div>
+  <div class="k-nav-right">
+    <div class="cm-lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="bn">বাং</button>
+      <button type="button" data-lang="hi">हिं</button>
+    </div>
+  </div>
+</nav>
+
+<main class="cm-wrap">
+  <h1 class="cm-title" data-bn="স্বেচ্ছাসেবী দল" data-t-html="title">Volunteer <em>communities</em></h1>
+  <p class="cm-sub" data-t="sub">People already cleaning up and looking after Purulia. Find one near you and join them.</p>
+
+  <div class="cm-bar">
+    <span class="cm-count" id="cm-count" data-t="loading">Loading…</span>
+    <select class="cm-select" id="cm-where" aria-label="Where"></select>
+  </div>
+  <div class="cm-list" id="cm-list"></div>
+
+  <div class="cm-footer">
+    <a href="kasa.html" data-t="f_map">Report map</a>
+    <a href="privacy.html" data-t="f_privacy">Privacy</a>
+    <a href="grievance.html" data-t="f_grievance">Grievance Officer</a>
+  </div>
+</main>
+
+<button type="button" class="cm-register" id="cm-open">+ <span data-t="register">Register your community</span></button>
+
+<dialog class="cm-dialog" id="cm-dialog" aria-labelledby="cm-form-title">
+  <div class="cm-dhead">
+    <div>
+      <h2 id="cm-form-title" data-t="register">Register your community</h2>
+      <p data-t="register_sub">Get listed so people nearby can find and join you</p>
+    </div>
+    <button type="button" class="cm-close" data-close aria-label="Close">✕</button>
+  </div>
+  <form class="cm-form" id="cm-form" novalidate>
+    <div class="cm-field">
+      <label class="cm-label" for="cm-name"><span data-t="f_name">Community name</span> <b>*</b></label>
+      <input class="cm-input" id="cm-name" maxlength="120" data-t-ph="ph_name" required>
+    </div>
+    <div class="cm-field">
+      <label class="cm-label" for="cm-tag"><span data-t="f_tag">What you do</span> <b>*</b></label>
+      <input class="cm-input" id="cm-tag" maxlength="140" data-t-ph="ph_tag" required>
+    </div>
+    <div class="cm-field">
+      <label class="cm-label" for="cm-about" data-t="f_about">About your community</label>
+      <p class="cm-hint" data-t="h_about">Optional. A few lines on what you do and how people can get involved.</p>
+      <textarea class="cm-textarea" id="cm-about" rows="3" maxlength="800" data-t-ph="ph_about"></textarea>
+    </div>
+    <div class="cm-field">
+      <span class="cm-label"><span data-t="f_where">Where you work</span> <b>*</b></span>
+      <label class="cm-check"><input type="checkbox" id="cm-all"> <span data-t="all_district">We work across all of Purulia district</span></label>
+      <div id="cm-areapick">
+        <input class="cm-input" id="cm-areaq" type="search" autocomplete="off" data-t-ph="ph_area" aria-label="Search a ward or block">
+        <div class="cm-areas" id="cm-areas" hidden></div>
+        <div class="cm-picked" id="cm-picked"></div>
+        <p class="cm-hint" data-t="h_area" style="margin-top:.5rem;">Pick the town wards and blocks your community covers.</p>
+      </div>
+    </div>
+    <div class="cm-field">
+      <span class="cm-label"><span data-t="f_links">Links</span> <b>*</b></span>
+      <p class="cm-hint" data-t="h_links">Add at least one so people can reach you.</p>
+      <div id="cm-linkrows"></div>
+      <div class="cm-addlinks" id="cm-addlinks"></div>
+      <p class="cm-hint" data-t="h_addlinks" style="margin-top:.5rem;">Tap an icon to add more links.</p>
+    </div>
+    <div class="cm-field">
+      <span class="cm-label"><span data-t="f_logo">Logo</span> <b>*</b></span>
+      <p class="cm-hint" data-t="h_logo">Any image works; it is cropped to a square.</p>
+      <label class="cm-logopick"><span class="cm-logobox" id="cm-logobox">⤒</span><span data-t="logo_btn">Upload a logo</span>
+        <input type="file" id="cm-logo" accept="image/*" hidden></label>
+    </div>
+    <hr class="cm-sep">
+    <div class="cm-field">
+      <span class="cm-label"><span data-t="f_verify">Verification details</span> <b>*</b></span>
+      <p class="cm-hint" data-t="h_verify">Not shown publicly. Only so the Parishkar team can verify and contact you about your listing.</p>
+      <input class="cm-input" id="cm-cname" maxlength="120" autocomplete="name" data-t-ph="ph_cname" aria-label="Your name">
+      <input class="cm-input" id="cm-cphone" type="tel" maxlength="20" autocomplete="tel" inputmode="tel" data-t-ph="ph_cphone" aria-label="Phone" style="margin-top:.6rem;">
+      <label class="cm-check" style="margin-top:.8rem;"><input type="checkbox" id="cm-adult"> <span data-t="adult">I am 18 or older and I run this community.</span></label>
+    </div>
+    <p class="cm-review" data-t="review">Listings are reviewed before they go live.</p>
+    <div class="cm-msg" id="cm-msg" role="status"></div>
+    <div class="cm-actions">
+      <button type="button" class="cm-cancel" data-close data-t="cancel">Cancel</button>
+      <button type="submit" class="cm-submit" id="cm-submit" data-t="submit">Submit</button>
+    </div>
+  </form>
+</dialog>
+
+<script defer src="config.js"></script>
+<script defer src="communities.js"></script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="theme-init.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Public analytics — Parishkar</title>
+<meta name="description" content="Live numbers from Parishkar: reports, verified fixes, how fast problems get fixed, problems that keep coming back, and every ward's record.">
+<meta property="og:title" content="Public analytics — Parishkar">
+<meta property="og:description" content="How fast Purulia's civic problems get fixed, ward by ward, from neighbour-verified reports.">
+<meta property="og:image" content="https://archiboltmusk.github.io/Purulia/og-bengal.jpg">
+<meta property="og:url" content="https://archiboltmusk.github.io/Purulia/analytics.html">
+<link rel="canonical" href="https://archiboltmusk.github.io/Purulia/analytics.html">
+<meta name="theme-color" content="#0a0805">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23DD3333' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%23DD3333' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23DD3333'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cnmikcyvyamplbldiivp.supabase.co" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&display=swap"></noscript>
+<link rel="stylesheet" href="kasa.css">
+<style>
+.an-csv{float:right;margin:0 0 .4rem .5rem;background:none;border:1px solid currentColor;border-radius:4px;color:inherit;opacity:.7;font:inherit;font-size:.75rem;padding:.15rem .5rem;cursor:pointer;}
+.an-csv:hover{opacity:1;}
+  .an-wrap{max-width:1480px;margin:0 auto;padding:3rem clamp(1.2rem,4vw,4rem) 7rem;}
+  .an-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:1rem 2rem;margin-bottom:2.4rem;}
+  .an-title{font-family:var(--serif);font-size:clamp(2.2rem,4.5vw,3.6rem);font-weight:700;color:var(--cream);letter-spacing:-.02em;line-height:1.05;}
+  .an-title em{font-style:italic;color:var(--amber);}
+  .an-sub{margin-top:.8rem;color:var(--text-md);max-width:680px;line-height:1.6;}
+  .an-meta{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--text-lo);}
+  .an-meta a{color:var(--amber);}
+  .an-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .an-tile{background:var(--ink);padding:1.6rem 1.4rem;}
+  .an-tile-n{font-family:var(--serif);font-size:clamp(2rem,3.4vw,2.8rem);font-weight:700;color:var(--cream);line-height:1;}
+  .an-tile-l{margin-top:.6rem;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-md);}
+  .an-tile-s{margin-top:.35rem;font-size:.82rem;color:var(--text-lo);}
+  .an-grid{display:grid;grid-template-columns:1fr;gap:1.4rem;margin-top:1.4rem;}
+  @media(min-width:1100px){.an-grid{grid-template-columns:1fr 1fr;}.an-span{grid-column:1 / -1;}}
+  .an-card{background:rgba(var(--cream-rgb),.02);border:1px solid var(--border);border-radius:6px;padding:1.4rem 1.5rem;min-width:0;}
+  .an-card h2{font-family:var(--serif);font-size:1.35rem;font-weight:700;color:var(--cream);}
+  .an-card-sub{margin-top:.3rem;font-size:.86rem;color:var(--text-md);}
+  .an-chart{position:relative;margin-top:1.2rem;height:220px;}
+  .an-chart svg{display:block;width:100%;height:100%;overflow:visible;}
+  .an-tip{position:absolute;pointer-events:none;background:var(--ink3);border:1px solid var(--border2);border-radius:4px;padding:.4rem .6rem;font-family:var(--mono);font-size:11px;color:var(--text-hi);white-space:nowrap;transform:translate(-50%,-110%);opacity:0;transition:opacity .1s;}
+  .an-table-wrap{margin-top:1rem;overflow-x:auto;}
+  .an-table{width:100%;border-collapse:collapse;font-size:.9rem;}
+  .an-table th,.an-table td{padding:.6rem .55rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;color:var(--text-hi);}
+  .an-table th{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-md);font-weight:500;white-space:nowrap;}
+  .an-table td.n,.an-table th.n{text-align:right;font-variant-numeric:tabular-nums;}
+  .an-table a{color:var(--amber);}
+  .an-empty{padding:1.6rem 0 .4rem;color:var(--text-lo);font-family:var(--mono);font-size:12px;}
+  .an-details{margin-top:.8rem;font-family:var(--mono);font-size:11px;color:var(--text-md);}
+  .an-details summary{cursor:pointer;color:var(--amber);}
+  .an-footer{margin-top:3rem;padding-top:1.6rem;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:1.2rem;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;}
+  .an-footer a{color:var(--amber);}
+  .an-table td:first-child,.an-table td.n{white-space:nowrap;}
+  .an-table small{color:var(--text-lo);font-size:.8em;}
+  .an-range{display:inline-flex;gap:.3rem;margin-top:.8rem;font-family:var(--mono);font-size:11px;letter-spacing:.06em;}
+  .an-range button{background:none;border:1px solid var(--border2);border-radius:4px;color:var(--text-md);font:inherit;padding:.2rem .6rem;cursor:pointer;}
+  .an-range button[aria-pressed="true"]{color:var(--amber);border-color:var(--amber);}
+  .an-sort{display:flex;align-items:center;gap:.5rem;color:var(--text-md);}
+  .an-sort select{background:var(--ink3);color:var(--text-hi);border:1px solid var(--border2);border-radius:4px;font:inherit;font-size:12px;padding:.2rem .4rem;}
+  @media(max-width:600px){.an-tiles{grid-template-columns:1fr 1fr;}.an-tile{padding:1.2rem 1rem;}.an-card{padding:1.1rem 1rem;}.an-table{font-size:.84rem;}.an-table th,.an-table td{padding:.5rem .4rem;}}
+</style>
+<script src="bug-report.js"></script>
+</head>
+<body>
+
+<nav class="k-nav">
+  <a href="index.html" class="k-nav-logo k-wordmark" aria-label="Parishkar home"><span class="k-mark" aria-hidden="true"></span><span class="k-wordmark-first">Parishkar</span></a>
+  <div class="k-nav-links">
+    <a href="index.html">Home</a>
+    <a href="blueprint.html">Blueprint</a>
+    <a href="kasa.html">Parishkar</a>
+  </div>
+  <div class="k-nav-right">
+    <a href="kasa.html" class="k-nav-cta">Report →</a>
+  </div>
+</nav>
+
+<main class="an-wrap">
+  <div class="an-head">
+    <div>
+      <h1 class="an-title">Parishkar, <em>in numbers</em></h1>
+      <p class="an-sub">Live from the public record. A problem counts as fixed only when neighbours confirm it on the spot. Reports are residents' allegations, not verified facts.</p>
+    </div>
+    <div class="an-meta"><span id="an-updated">Loading…</span> · <a href="methodology.html">How it works</a></div>
+  </div>
+
+  <section class="an-tiles" aria-label="Headline numbers">
+    <div class="an-tile"><div class="an-tile-n" id="t-reports">—</div><div class="an-tile-l">Reports</div></div>
+    <div class="an-tile"><div class="an-tile-n" id="t-open">—</div><div class="an-tile-l">Unresolved</div><div class="an-tile-s" id="t-overdue"></div></div>
+    <div class="an-tile"><div class="an-tile-n" id="t-fixed">—</div><div class="an-tile-l">Verified fixed</div><div class="an-tile-s" id="t-fixed-how"></div></div>
+    <div class="an-tile"><div class="an-tile-n" id="t-rate">—</div><div class="an-tile-l">Resolution rate</div><div class="an-tile-s">verified fixes ÷ all reports</div></div>
+    <div class="an-tile"><div class="an-tile-n" id="t-median">—</div><div class="an-tile-l">Typical days to fix</div><div class="an-tile-s">median of verified fixes</div></div>
+    <div class="an-tile"><div class="an-tile-n" id="t-streak">—</div><div class="an-tile-l">Fix streak</div><div class="an-tile-s">days in a row with a verified fix</div></div>
+    <div class="an-tile"><div class="an-tile-n" id="t-fake">—</div><div class="an-tile-l">Fake cleanups caught</div></div>
+  </section>
+
+  <div class="an-grid">
+    <section class="an-card an-span">
+      <h2>Reports filed per day</h2>
+      <div class="an-range" role="group" aria-label="Days to show"><button type="button" data-range="7" aria-pressed="false">7 days</button><button type="button" data-range="30" aria-pressed="true">30 days</button><button type="button" data-range="90" aria-pressed="false">90 days</button></div>
+      <p class="an-card-sub" id="an-chart-sub"></p>
+      <div class="an-chart" id="an-chart"><div class="an-tip" id="an-tip"></div></div>
+      <details class="an-details"><summary>Show as a table</summary><div class="an-table-wrap" id="an-chart-table"></div></details>
+    </section>
+
+    <section class="an-card">
+      <h2>Fastest fixes this week</h2>
+      <p class="an-card-sub">Verified fixes in the last 7 days, quickest first.</p>
+      <div class="an-table-wrap" id="an-fast"></div>
+    </section>
+
+    <section class="an-card">
+      <h2>Problems that keep coming back</h2>
+      <p class="an-card-sub">Spots reported again within 60 days of being fixed.</p>
+      <div class="an-table-wrap" id="an-repeat"></div>
+    </section>
+
+    <section class="an-card an-span">
+      <h2>Spots that keep filling up</h2>
+      <p class="an-card-sub">Places with 3 or more reports within 50 m in the last 90 days, busiest first. Each report counts, including people who reported a problem already on the map. This shows a place, not a person: it tells the ward and the neighbours where the pattern is.</p>
+      <div class="an-table-wrap" id="an-spots"></div>
+    </section>
+
+    <section class="an-card" id="an-speed-card">
+      <h2>How fast cleanups happen</h2>
+      <p class="an-card-sub">Verified fixes, by time from report to fix. Town is the municipality's wards; Villages is the CD blocks.</p>
+      <div class="an-table-wrap" id="an-speed"></div>
+      <p class="an-card-sub" id="an-speed-note"></p>
+    </section>
+
+    <section class="an-card" id="an-stale-card">
+      <h2>Waiting too long</h2>
+      <p class="an-card-sub">Unresolved reports by how long they have waited. Each row includes the longer waits.</p>
+      <div class="an-table-wrap" id="an-stale"></div>
+    </section>
+
+    <section class="an-card an-span" id="an-wards-card">
+      <h2>Every ward in Purulia town</h2>
+      <label class="an-range an-sort">Sort by <select id="an-ward-sort"><option value="open">Unresolved</option><option value="total">Total reports</option><option value="fixed">Verified fixed</option><option value="speed">Fastest median fix</option></select></label>
+      <p class="an-card-sub">Tap a ward to see it on the map. Medians under 5 fixes show how many.</p>
+      <div class="an-table-wrap" id="an-wards"></div>
+    </section>
+
+    <section class="an-card an-span" id="an-types-card">
+      <h2>By complaint type and waste type</h2>
+      <p class="an-card-sub">Every report counted on this page, by what was reported. Reports don't record a zone, so the split by area is town and village (see above).</p>
+      <div class="an-table-wrap" id="an-types"></div>
+      <p class="an-card-sub" style="margin-top:1rem">Waste type is recorded only on reports made after that question was added (late September 2026), so older reports are not counted here.</p>
+      <div class="an-table-wrap" id="an-waste"></div>
+    </section>
+
+    <section class="an-card an-span" id="an-blocks-card">
+      <h2>Every block</h2>
+      <p class="an-card-sub">Reports from villages, outside Purulia town, by CD block. Ordered by unresolved reports.</p>
+      <div class="an-table-wrap" id="an-blocks"></div>
+    </section>
+
+    <section class="an-card an-span" id="an-mla-card">
+      <h2>By MLA and MP</h2>
+      <p class="an-card-sub">Every report, grouped by the assembly seat and Lok Sabha seat it falls in. Ordered by unresolved reports.</p>
+      <div class="an-table-wrap" id="an-mla"></div>
+      <div class="an-table-wrap" id="an-mp" style="margin-top:1rem"></div>
+      <p class="an-card-sub" id="an-mla-note"></p>
+    </section>
+
+    <section class="an-card an-span" id="an-letters-card" hidden style="display:none">
+      <h2>Letters to the offices responsible</h2>
+      <p class="an-card-sub">Every Monday each office with an open report in its area gets a letter listing them, with photo and location: the municipality for town wards, the BDO for village blocks. A report still open 14 days past its deadline also goes to the District Magistrate. Office emails: District Disaster Management Plan Purulia 2023-24 and purulia.gov.in.</p>
+      <div class="an-table-wrap" id="an-letters"></div>
+    </section>
+
+    <section class="an-card an-span">
+      <h2>What moderators and automatic checks did</h2>
+      <p class="an-card-sub" id="an-mod-now">Every moderator action and automatic check is counted here, month by month. Reasons are shown on each report's own evidence trail.</p>
+      <div class="an-table-wrap" id="an-mod"></div>
+    </section>
+
+    <section class="an-card an-span" id="an-forest">
+      <h2>Forests from space</h2>
+      <p class="an-card-sub">Parishkar doesn't track tree loss itself. Global Forest Watch publishes satellite alerts where tree cover disappears, updated every few days. The map below opens on Purulia: turn on <em>Integrated deforestation alerts</em>. An alert is a clue, not proof: it can be a harvest or a fire. If you can see illegal felling or mining on the spot, report it with a photo.</p>
+      <p class="an-card-sub"><a href="https://www.globalforestwatch.org/map/?map=eyJjZW50ZXIiOnsibGF0IjoyMy4yNSwibG5nIjo4Ni4zNX0sInpvb20iOjl9" target="_blank" rel="noopener">Open the Global Forest Watch map of Purulia ↗</a> · Data: Global Forest Watch, CC BY 4.0</p>
+    </section>
+  </div>
+
+  <div class="an-footer">
+    <a href="waste.html">Where the waste goes</a>
+    <a href="adopt.html">Adopted spots</a>
+    <a href="digest.html">Weekly ward digest</a>
+    <a href="changelog.html">What's new</a>
+    <a href="methodology.html">How it works</a>
+    <a href="open-data.html">Open data</a>
+    <a href="kasa.html">Report map</a>
+    <a href="offices.html">Open reports by office</a>
+    <a href="terms.html">Terms</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="grievance.html">Grievance Officer</a>
+    <a href="https://buymeacoffee.com/anupamstorm" target="_blank" rel="noopener">Buy me a coffee</a>
+  </div>
+</main>
+
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script defer src="config.js"></script>
+<script defer src="city.js"></script>
+<script defer src="kasa-i18n.js"></script>
+<script defer src="place-facts.js"></script>
+<script defer src="analytics.js"></script>
+</body>
+</html>

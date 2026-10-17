@@ -1,0 +1,416 @@
+const rgbaCream = a => 'rgba(' + (getComputedStyle(document.documentElement).getPropertyValue('--cream-rgb').trim() || '240,230,208') + ',' + a + ')';
+/* Public analytics for the chosen district (place-facts.js): computed in the browser from the public view. */
+(async function(){
+  const COLUMNS = 'id,created_at,ward_no,category,status,landmark,resolved_at,resolution_method,sla_days,is_duplicate,recurrence_count,rejected_claims,area_kind,block_name,parent_report_id,place,place_ward,waste_type';
+  const DAY = 86400000;
+
+  // Fixes that didn't last: a new report at the spot (a recurrence) within fixMustLastDays of the fix.
+  // Times are public to the hour, so allow an hour of slack.
+  const LAST_DAYS = (window.KASA_CITY && window.KASA_CITY.fixMustLastDays) || 14;
+  function relapsedIds(rows){
+    const byId = new Map(rows.map(r => [String(r.id), r])), out = new Set();
+    for (const c of rows){
+      const p = c.parent_report_id != null && !c.is_duplicate && byId.get(String(c.parent_report_id));
+      if (!p || p.status !== 'resolved' || !p.resolved_at) continue;
+      const gap = Date.parse(c.created_at) - Date.parse(p.resolved_at);
+      if (gap >= -3600000 && gap <= LAST_DAYS * DAY) out.add(String(p.id));
+    }
+    return out;
+  }
+  const cfg = window.KASA_CONFIG || {};
+  const sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+  const L = (window.KASA_I18N && window.KASA_I18N.en) || {};
+  const cat = k => L['cat_' + k] || k;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const dayKey = d => new Date(d).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const median = xs => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  const fixDays = r => Math.max(0, (new Date(r.resolved_at) - new Date(r.created_at)) / DAY);
+  const reportLink = r => `kasa.html?report=${encodeURIComponent(r.id)}`;
+
+  // The chosen district. Purulia keeps its wards, blocks and seats; any other district gets
+  // its own reports grouped by municipality.
+  const PF = window.PlaceFacts;
+  let slug = 'purulia', D = null;
+  if (PF){ await PF.load().catch(() => null); if (PF.data){ slug = PF.current(); D = PF.data.districts[slug]; } }
+  const isPurulia = slug === 'purulia', NAME = D ? D.name : 'Purulia';
+  const inPlace = PF && PF.data ? await PF.reportFilter(slug) : () => true;
+
+  const [rep, wardRes] = await Promise.all([
+    sb.from('kasa_public_reports').select(COLUMNS).order('created_at', { ascending: false }).limit(5000),
+    sb.from('wards').select('ward_no,councillor_name').order('ward_no'),
+  ]);
+  if (rep.error){ set('an-updated', 'Could not load the data. Please try again later.'); return; }
+  const relapsed = relapsedIds(rep.data || []);
+  const all = (rep.data || []).filter(r => !r.is_duplicate && inPlace(r));
+  const mine = new Set(all.map(r => String(r.id)));
+  const wards = {}; (wardRes.data || []).forEach(w => { wards[w.ward_no] = w; });
+  const now = Date.now();
+  const open = all.filter(r => r.status !== 'resolved');
+  const fixed = all.filter(r => r.status === 'resolved' && ['community', 'photo_check'].includes(r.resolution_method) && r.resolved_at && !relapsed.has(String(r.id)));
+  const overdue = open.filter(r => (now - new Date(r.created_at)) / DAY > (r.sla_days || 7));
+
+  // Headline numbers
+  set('an-updated', 'Updated ' + new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }));
+  set('t-reports', all.length);
+  set('t-open', open.length);
+  set('t-overdue', overdue.length ? `${overdue.length} overdue (past fix target)` : 'none overdue');
+  set('t-fixed', fixed.length);
+  set('t-rate', all.length ? Math.round(100 * fixed.length / all.length) + '%' : '—');
+  const byPhoto = fixed.filter(r => r.resolution_method === 'photo_check').length;
+  set('t-fixed-how', `${fixed.length - byPhoto} by neighbours · ${byPhoto} by photo check` + (relapsed.size ? ` · ${relapsed.size} more didn't last` : ''));
+  const med = median(fixed.map(fixDays));
+  set('t-median', med == null ? '—' : med < 1 ? '< 1' : String(Math.round(med)));
+  set('t-fake', all.reduce((n, r) => n + (r.rejected_claims || 0), 0));
+  const fixDaysSet = new Set(fixed.map(r => dayKey(r.resolved_at)));
+  // A streak still counts today if the last fix was yesterday.
+  let streak = 0;
+  for (let d = fixDaysSet.has(dayKey(now)) ? now : now - DAY; fixDaysSet.has(dayKey(d)); d -= DAY) streak++;
+  set('t-streak', streak);
+
+  // Reports per day: 7, 30 or 90 days (toggle on the card)
+  let days = [], range = 30;
+  const fmt = d => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  function buildDays(n){
+    days = [];
+    for (let i = n - 1; i >= 0; i--){ const d = now - i * DAY; days.push({ key: dayKey(d), date: new Date(d), n: 0 }); }
+    const byKey = Object.fromEntries(days.map(d => [d.key, d]));
+    all.forEach(r => { const d = byKey[dayKey(r.created_at)]; if (d) d.n++; });
+    document.getElementById('an-chart-sub').textContent = `Last ${n} days, all categories.`;
+    document.getElementById('an-chart-table').innerHTML = `<table class="an-table"><thead><tr><th>Day</th><th class="n">Reports</th></tr></thead><tbody>${
+      days.map(d => `<tr><td>${fmt(d.date)}</td><td class="n">${d.n}</td></tr>`).join('')}</tbody></table>`;
+  }
+
+  const chart = document.getElementById('an-chart');
+  const tip = document.getElementById('an-tip');
+  function drawChart(){
+    chart.querySelector('svg')?.remove();
+    const W = chart.clientWidth, H = chart.clientHeight, padL = 28, padB = 22, padT = 6;
+    const max = Math.max(1, ...days.map(d => d.n));
+    const step = max <= 4 ? 1 : Math.ceil(max / 4);
+    const top = Math.ceil(max / step) * step;
+    const iw = W - padL, ih = H - padB - padT, slot = iw / days.length, bw = Math.max(2, slot - 2);
+    const y = v => padT + ih - (v / top) * ih;
+    let g = '';
+    for (let v = 0; v <= top; v += step){
+      g += `<line x1="${padL}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="${rgbaCream(v ? .07 : .22)}" stroke-width="1"/>`
+         + `<text x="${padL - 6}" y="${y(v) + 3.5}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="${rgbaCream(.46)}">${v}</text>`;
+    }
+    days.forEach((d, i) => {
+      const x = padL + i * slot + 1, h = ih * d.n / top, yt = padT + ih - h, r = Math.min(4, bw / 2, h);
+      if (d.n) g += `<path d="M${x},${padT + ih} V${yt + r} Q${x},${yt} ${x + r},${yt} H${x + bw - r} Q${x + bw},${yt} ${x + bw},${yt + r} V${padT + ih} Z" fill="#DD3333"/>`;
+      g += `<rect class="an-hit" data-i="${i}" x="${padL + i * slot}" y="${padT}" width="${slot}" height="${ih}" fill="transparent"/>`;
+    });
+    [0, (days.length - 1) >> 1, days.length - 1].forEach(i => {
+      g += `<text x="${padL + i * slot + slot / 2}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : i === days.length - 1 ? 'end' : 'middle'}" font-family="JetBrains Mono,monospace" font-size="10" fill="${rgbaCream(.46)}">${fmt(days[i].date)}</text>`;
+    });
+    chart.insertAdjacentHTML('afterbegin', `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Reports filed per day over the last 30 days">${g}</svg>`);
+    chart.querySelectorAll('.an-hit').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        const d = days[+el.dataset.i];
+        tip.textContent = `${fmt(d.date)} · ${d.n} report${d.n === 1 ? '' : 's'}`;
+        tip.style.left = (padL + (+el.dataset.i) * slot + slot / 2) + 'px';
+        tip.style.top = y(d.n) + 'px';
+        tip.style.opacity = 1;
+      });
+      el.addEventListener('mouseleave', () => { tip.style.opacity = 0; });
+    });
+  }
+  buildDays(range);
+  drawChart();
+  new ResizeObserver(drawChart).observe(chart);
+  document.querySelectorAll('[data-range]').forEach(b => b.addEventListener('click', () => {
+    range = +b.dataset.range;
+    document.querySelectorAll('[data-range]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    buildDays(range); drawChart();
+  }));
+
+  const table = (head, rows, empty) => rows.length
+    ? `<table class="an-table"><thead><tr>${head}</tr></thead><tbody>${rows.join('')}</tbody></table>`
+    : `<div class="an-empty">${esc(empty)}</div>`;
+  const place = r => esc(r.landmark || (r.ward_no ? 'Ward ' + r.ward_no : r.block_name ? r.block_name + ' block' : ''));
+
+  // Fastest fixes this week
+  const week = fixed.filter(r => now - new Date(r.resolved_at) < 7 * DAY).sort((a, b) => fixDays(a) - fixDays(b)).slice(0, 10);
+  document.getElementById('an-fast').innerHTML = table('<th>Problem</th><th>Where</th><th class="n">Fixed in</th>',
+    week.map(r => { const d = fixDays(r); return `<tr><td><a href="${reportLink(r)}">${esc(cat(r.category))}</a></td><td>${place(r)}</td><td class="n">${d < 1 ? 'same day' : Math.round(d) + ' days'}</td></tr>`; }),
+    'No verified fixes in the last 7 days.');
+
+  // Repeat hot spots
+  const repeat = all.filter(r => r.recurrence_count > 0).sort((a, b) => b.recurrence_count - a.recurrence_count).slice(0, 10);
+  document.getElementById('an-repeat').innerHTML = table('<th>Problem</th><th>Where</th><th class="n">Came back</th><th>Now</th>',
+    repeat.map(r => `<tr><td><a href="${reportLink(r)}">${esc(cat(r.category))}</a></td><td>${place(r)}</td><td class="n">${r.recurrence_count}×</td><td>${r.status === 'resolved' ? 'fixed' : 'unresolved'}</td></tr>`),
+    'No problem has come back after being fixed yet.');
+
+  // Spots that keep filling up (grouped on the server; places, never people)
+  sb.rpc('kasa_problem_spots', { p_days: 90 }).then(({ data, error }) => {
+    const el = document.getElementById('an-spots');
+    if (error){ el.innerHTML = '<div class="an-empty">Could not load problem spots.</div>'; return; }
+    const where = s => esc(s.landmark || (s.ward_no ? 'Ward ' + s.ward_no : s.block_name ? s.block_name + ' block' : 'Near ' + s.lat + ', ' + s.lng));
+    el.innerHTML = table('<th>Where</th><th>Mostly</th><th class="n">Reports</th><th class="n">Still open</th><th class="n">Fixed</th><th class="n">Came back after a fix</th><th>Last report</th>',
+      (data || []).filter(s => mine.has(String(s.report_id))).map(s => `<tr><td><a href="kasa.html?report=${encodeURIComponent(s.report_id)}">${where(s)}</a></td><td>${esc(cat(s.category))}</td>
+        <td class="n">${s.reports}</td><td class="n">${s.open}</td><td class="n">${s.fixed}</td><td class="n">${s.came_back}</td>
+        <td>${esc(new Date(s.last_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }))}</td></tr>`),
+      'No place has 3 or more reports in the last 90 days.');
+  });
+
+  speed(); stale(); types();
+
+  if (!isPurulia) return otherDistrict();
+
+  // Every ward
+  const stats = {};
+  for (let w = 1; w <= 23; w++) stats[w] = { ward: w, open: 0, overdue: 0, fixed: 0, fake: 0, total: 0, days: [] };
+  all.forEach(r => {
+    const s = stats[r.ward_no]; if (!s) return;
+    s.total++;
+    if (r.status !== 'resolved'){ s.open++; if ((now - new Date(r.created_at)) / DAY > (r.sla_days || 7)) s.overdue++; }
+    s.fake += r.rejected_claims || 0;
+  });
+  fixed.forEach(r => { const s = stats[r.ward_no]; if (s){ s.fixed++; s.days.push(fixDays(r)); } });
+  const sorts = {
+    open: (a, b) => b.open - a.open || b.overdue - a.overdue || a.ward - b.ward,
+    total: (a, b) => b.total - a.total || a.ward - b.ward,
+    fixed: (a, b) => b.fixed - a.fixed || a.ward - b.ward,
+    speed: (a, b) => (median(a.days) ?? Infinity) - (median(b.days) ?? Infinity) || a.ward - b.ward,
+  };
+  const drawWards = by => {
+    document.getElementById('an-wards').innerHTML = table(
+      '<th>Ward</th><th>Councillor</th><th class="n">Total</th><th class="n">Unresolved</th><th class="n">Overdue</th><th class="n">Verified fixed</th><th class="n">Typical days to fix</th><th class="n">Fake cleanups caught</th>',
+      Object.values(stats).sort(sorts[by]).map(s => `<tr><td><a href="kasa.html?ward=${s.ward}">Ward ${s.ward}</a></td><td>${esc(wards[s.ward]?.councillor_name || '—')}</td>
+        <td class="n">${s.total}</td><td class="n">${s.open}</td><td class="n">${s.overdue}</td><td class="n">${s.fixed}</td><td class="n">${medCell(s.days)}</td><td class="n">${s.fake}</td></tr>`),
+      'No wards yet.');
+  };
+  drawWards('open');
+  document.getElementById('an-ward-sort').addEventListener('change', e => drawWards(e.target.value));
+
+  // Every block (reports outside Purulia town)
+  const bstats = {};
+  all.forEach(r => {
+    if (r.area_kind !== 'rural' || !r.block_name) return;
+    const s = bstats[r.block_name] ||= { block: r.block_name, open: 0, overdue: 0, fixed: 0, fake: 0, days: [] };
+    if (r.status !== 'resolved'){ s.open++; if ((now - new Date(r.created_at)) / DAY > (r.sla_days || 7)) s.overdue++; }
+    s.fake += r.rejected_claims || 0;
+  });
+  fixed.forEach(r => { const s = bstats[r.block_name]; if (s && r.area_kind === 'rural'){ s.fixed++; s.days.push(fixDays(r)); } });
+  const brows = Object.values(bstats).sort((a, b) => b.open - a.open || b.overdue - a.overdue || a.block.localeCompare(b.block));
+  document.getElementById('an-blocks').innerHTML = table(
+    '<th>Block</th><th class="n">Unresolved</th><th class="n">Overdue</th><th class="n">Verified fixed</th><th class="n">Typical days to fix</th><th class="n">Fake cleanups caught</th>',
+    brows.map(s => { const m = median(s.days); return `<tr><td>${esc(s.block)}</td>
+      <td class="n">${s.open}</td><td class="n">${s.overdue}</td><td class="n">${s.fixed}</td><td class="n">${m == null ? '—' : m < 1 ? '< 1' : Math.round(m)}</td><td class="n">${s.fake}</td></tr>`; }),
+    'No village reports yet. Parishkar now takes reports from all 20 blocks of the district.');
+
+  // MLA / MP leaderboard, from the constituency table in city.js.
+  const city = window.KASA_CITY || {};
+  const seats = city.constituencies || [], reps = city.reps || {}, splits = city.splitBlocks || {};
+  const person = p => typeof p === 'string' ? reps[p] : p;
+  const townSeat = seats.find(c => c.town);
+  const key = b => (b || '').toLowerCase();
+  const byBlock = {}; seats.forEach(c => (c.blocks || []).forEach(b => { byBlock[key(b)] = c; }));
+  const splitByKey = {}; Object.entries(splits).forEach(([name, v]) => { splitByKey[key(name)] = { name, ...v }; });
+  const blank = () => ({ open: 0, overdue: 0, fixed: 0, fake: 0, days: [] });
+  const add = (s, r) => {
+    if (r.status !== 'resolved'){ s.open++; if ((now - new Date(r.created_at)) / DAY > (r.sla_days || 7)) s.overdue++; }
+    else if (['community', 'photo_check'].includes(r.resolution_method) && r.resolved_at && !relapsed.has(String(r.id))){ s.fixed++; s.days.push(fixDays(r)); }
+    s.fake += r.rejected_claims || 0;
+  };
+  const cstats = new Map(seats.map(c => [c, blank()])), sstats = new Map(), unmapped = blank();
+  all.forEach(r => {
+    const rural = r.area_kind === 'rural';
+    const seat = rural ? byBlock[key(r.block_name)] : (r.ward_no ? townSeat : null);
+    if (seat) return add(cstats.get(seat), r);
+    const sp = rural && splitByKey[key(r.block_name)];
+    if (sp){ if (!sstats.has(sp)) sstats.set(sp, blank()); return add(sstats.get(sp), r); }
+    add(unmapped, r);
+  });
+  const cells = s => { const m = median(s.days); return `<td class="n">${s.open}</td><td class="n">${s.overdue}</td><td class="n">${s.fixed}</td><td class="n">${m == null ? '—' : m < 1 ? '< 1' : Math.round(m)}</td><td class="n">${s.fake}</td>`; };
+  const nums = '<th class="n">Unresolved</th><th class="n">Overdue</th><th class="n">Verified fixed</th><th class="n">Typical days to fix</th><th class="n">Fake cleanups caught</th>';
+  const who = p => p ? `${esc(p.name)}${p.party ? ` <small>(${esc(p.party)})</small>` : ''}` : '<small>not listed</small>';
+  const order = (a, b) => b[1].open - a[1].open || b[1].overdue - a[1].overdue;
+  const seatName = no => (seats.find(c => c.no === no) || {}).name || no;
+  const any = s => s.open + s.fixed + s.fake;
+  const mlaRows = [...cstats].sort(order).map(([c, s]) => `<tr><td>${esc(c.name)}${c.no ? ` <small>(No. ${c.no})</small>` : ''}</td><td>${who(person(c.mla))}</td>${cells(s)}</tr>`);
+  [...sstats].filter(([, s]) => any(s)).sort(order).forEach(([sp, s]) => mlaRows.push(
+    `<tr><td>${esc(sp.name)} block</td><td><small>split between ${esc(sp.seats.map(seatName).join(', '))}</small></td>${cells(s)}</tr>`));
+  if (any(unmapped)) mlaRows.push(`<tr><td><em>Not mapped yet</em></td><td><small>no ward or block recorded</small></td>${cells(unmapped)}</tr>`);
+  document.getElementById('an-mla').innerHTML = table('<th>Assembly seat</th><th>MLA</th>' + nums, mlaRows, 'No constituencies set up yet.');
+  const lstats = new Map();
+  const addTo = (ls, s) => {
+    if (!ls) return;
+    const t = lstats.get(ls) || blank();
+    t.open += s.open; t.overdue += s.overdue; t.fixed += s.fixed; t.fake += s.fake; t.days.push(...s.days);
+    lstats.set(ls, t);
+  };
+  cstats.forEach((s, c) => addTo(c.lokSabha, s));
+  sstats.forEach((s, sp) => addTo(sp.lokSabha, s));
+  document.getElementById('an-mp').innerHTML = table('<th>Lok Sabha seat</th><th>MP</th>' + nums,
+    [...lstats].sort(order).map(([ls, s]) => `<tr><td>${esc(ls)}</td><td>${who(person((city.lokSabha || {})[ls]?.mp))}</td>${cells(s)}</tr>`),
+    'No Lok Sabha seats set up yet.');
+  set('an-mla-note', 'Town reports count toward the Purulia seat; village reports count by CD block. Arsha, Purulia I and Hura blocks are divided between assembly seats by gram panchayat, so they have their own rows. Seats: Delimitation Commission Order No. 18 (2006). MLAs: 2026 assembly election. MPs: 2024 Lok Sabha election. Spotted a mistake? Write to the Grievance Officer.');
+
+  moderation();
+  letters();
+  addCsv();
+
+  // Median days, with the sample size shown when it is small.
+  function medCell(days){
+    const m = median(days);
+    if (m == null) return '—';
+    return (m < 1 ? '< 1' : Math.round(m)) + (days.length < 5 ? ` <small>(${days.length} fix${days.length === 1 ? '' : 'es'})</small>` : '');
+  }
+
+  // How fast verified fixes happen: report to fix, town (wards) vs village (blocks).
+  function speed(){
+    const LABELS = ['Within 1 day', '1 to 3 days', '3 to 7 days', 'Over 7 days'];
+    const split = { town: [0, 0, 0, 0], village: [0, 0, 0, 0] };
+    fixed.forEach(r => {
+      const d = fixDays(r), k = d <= 1 ? 0 : d <= 3 ? 1 : d <= 7 ? 2 : 3;
+      split[r.area_kind === 'rural' ? 'village' : 'town'][k]++;
+    });
+    const t = split.town.reduce((a, b) => a + b, 0), v = split.village.reduce((a, b) => a + b, 0), all2 = t + v;
+    const pct = (n, of) => of ? `${n} <small>(${Math.round(100 * n / of)}%)</small>` : '—';
+    document.getElementById('an-speed').innerHTML = table('<th>Report to verified fix</th><th class="n">Town</th><th class="n">Villages</th><th class="n">All</th>',
+      LABELS.map((label, k) => `<tr><td>${label}</td><td class="n">${pct(split.town[k], t)}</td><td class="n">${pct(split.village[k], v)}</td><td class="n">${pct(split.town[k] + split.village[k], all2)}</td></tr>`),
+      'No verified fixes yet.');
+    set('an-speed-note', all2 < 10
+      ? `Small sample: ${all2} verified fix${all2 === 1 ? '' : 'es'} so far. Percentages will move a lot until there are more.`
+      : `${all2} verified fixes counted. Percentages are of verified fixes in each column.`);
+  }
+
+  // Unresolved reports by how long they have waited.
+  function stale(){
+    const open = all.filter(r => r.status !== 'resolved');
+    const town = open.filter(r => r.area_kind !== 'rural'), village = open.filter(r => r.area_kind === 'rural');
+    const waiting = (list, n) => list.filter(r => (now - new Date(r.created_at)) / DAY >= n).length;
+    const pct = (n, of) => of ? `${n} <small>(${Math.round(100 * n / of)}%)</small>` : '—';
+    document.getElementById('an-stale').innerHTML = table('<th>Unresolved for</th><th class="n">Town</th><th class="n">Villages</th><th class="n">All</th>',
+      [7, 14, 30].map(n => `<tr><td>${n} days or more</td><td class="n">${pct(waiting(town, n), town.length)}</td><td class="n">${pct(waiting(village, n), village.length)}</td><td class="n">${pct(waiting(open, n), open.length)}</td></tr>`),
+      'Nothing unresolved right now.');
+  }
+
+  // Reports by complaint type and waste type, all reports on this page.
+  function types(){
+    const group = (key, label) => {
+      const m = new Map();
+      all.forEach(r => {
+        const k = r[key]; if (k == null || k === '') return;
+        const s = m.get(k) || { n: 0, open: 0, fixed: 0 };
+        s.n++; if (r.status !== 'resolved') s.open++; m.set(k, s);
+      });
+      fixed.forEach(r => { const s = m.get(r[key]); if (s) s.fixed++; });
+      return table(`<th>${label}</th><th class="n">Reports</th><th class="n">Unresolved</th><th class="n">Verified fixed</th><th class="n">Share fixed</th>`,
+        [...m].sort((a, b) => b[1].n - a[1].n).map(([k, s]) => `<tr><td>${esc(key === 'category' ? cat(k) : k.replace(/_/g, ' '))}</td><td class="n">${s.n}</td><td class="n">${s.open}</td><td class="n">${s.fixed}</td><td class="n">${Math.round(100 * s.fixed / s.n)}%</td></tr>`),
+        'No reports yet.');
+    };
+    document.getElementById('an-types').innerHTML = group('category', 'Complaint type');
+    document.getElementById('an-waste').innerHTML = group('waste_type', 'Waste type');
+  }
+
+  // Another district: its municipalities instead of Purulia's wards, blocks and seats; the
+  // moderation counts (statewide) and the forest map, opened on the district.
+  async function otherDistrict(){
+    const n = esc(NAME), hide = el => { el.hidden = true; el.style.display = 'none'; };
+    document.title = `${NAME} in numbers — Parishkar Bengal`;
+    document.querySelector('.an-title').innerHTML = `Parishkar Bengal: ${n}, <em>in numbers</em>`;
+    const bodies = await PF.bodies(slug);
+    const tstats = new Map(bodies.map(b => [b.slug || 'kolkata', { name: b.body || b.name, open: 0, overdue: 0, fixed: 0, fake: 0, days: [] }]));
+    const rest = { name: `Rest of ${NAME}`, open: 0, overdue: 0, fixed: 0, fake: 0, days: [] };
+    all.forEach(r => {
+      const s = tstats.get(r.place) || rest;
+      if (r.status !== 'resolved'){ s.open++; if ((now - new Date(r.created_at)) / DAY > (r.sla_days || 7)) s.overdue++; }
+      else if (fixed.includes(r)){ s.fixed++; s.days.push(fixDays(r)); }
+      s.fake += r.rejected_claims || 0;
+    });
+    const trows = [...tstats.values(), rest].filter(s => s !== rest || s.open + s.fixed + s.fake)
+      .sort((a, b) => b.open - a.open || b.overdue - a.overdue || a.name.localeCompare(b.name));
+    document.querySelector('#an-wards-card h2').textContent = `Every municipality in ${NAME}`;
+    document.querySelector('#an-wards-card .an-card-sub').textContent = `Ordered by unresolved reports. Reports outside a municipality are counted under "Rest of ${NAME}".`;
+    document.getElementById('an-wards').innerHTML = table(
+      '<th>Municipality</th><th class="n">Unresolved</th><th class="n">Overdue</th><th class="n">Verified fixed</th><th class="n">Typical days to fix</th><th class="n">Fake cleanups caught</th>',
+      trows.map(s => { const m = median(s.days); return `<tr><td>${esc(s.name)}</td><td class="n">${s.open}</td><td class="n">${s.overdue}</td><td class="n">${s.fixed}</td><td class="n">${m == null ? '—' : m < 1 ? '< 1' : Math.round(m)}</td><td class="n">${s.fake}</td></tr>`; }),
+      `No report from ${NAME} yet. Be the first: report a problem on the map.`);
+    hide(document.getElementById('an-blocks-card'));
+    hide(document.getElementById('an-ward-sort'));
+    document.querySelector('#an-mla-card .an-card-sub').innerHTML = `Who answers for each part of ${n}, with their reports, is on the map: <a href="kasa.html?place=district:${esc(slug)}">open ${n}'s leaderboard</a>.`;
+    ['an-mla', 'an-mp', 'an-mla-note'].forEach(id => hide(document.getElementById(id)));
+    const pts = bodies.map(b => b.at).filter(Boolean);
+    const forest = document.getElementById('an-forest');
+    if (pts.length){
+      const lat = pts.reduce((a, p) => a + p[1], 0) / pts.length, lng = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+      const url = 'https://www.globalforestwatch.org/map/?map=' + btoa(JSON.stringify({ center: { lat: +lat.toFixed(2), lng: +lng.toFixed(2) }, zoom: 9 }));
+      forest.querySelector('.an-card-sub').innerHTML = forest.querySelector('.an-card-sub').innerHTML.replace('opens on Purulia', `opens on ${n}`);
+      forest.querySelectorAll('.an-card-sub')[1].innerHTML = `<a href="${esc(url)}" target="_blank" rel="noopener">Open the Global Forest Watch map of ${n} ↗</a> · Data: Global Forest Watch, CC BY 4.0`;
+    } else hide(forest);
+    moderation();
+    addCsv();
+  }
+
+  // CSV downloads (idea from FixMyStreet's dashboard export): every table as it is shown, and every
+  // report counted on this page with its public columns.
+  function addCsv(){
+    const cell = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const save = (name, text) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['\ufeff' + text], { type: 'text/csv;charset=utf-8' }));
+      a.download = `parishkar-${slug}-${name}-${dayKey(Date.now())}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
+    document.querySelectorAll('.an-card').forEach(card => {
+      if (!card.querySelector('.an-table-wrap') || card.querySelector('.an-csv')) return;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'an-csv'; b.textContent = 'Download CSV';
+      b.addEventListener('click', () => {
+        const tables = [...card.querySelectorAll('table')];
+        if (!tables.length) return;
+        const name = (card.querySelector('h2')?.textContent || 'table').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        save(name, tables.map(t => [...t.rows].map(tr => [...tr.cells].map(c => cell(c.textContent.trim())).join(',')).join('\r\n')).join('\r\n\r\n'));
+      });
+      card.prepend(b);
+    });
+    const meta = document.querySelector('.an-meta');
+    if (meta && !document.getElementById('an-csv-all')){
+      const a = document.createElement('a');
+      a.href = '#'; a.id = 'an-csv-all'; a.textContent = 'All reports (CSV)';
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const cols = ['id', 'created_at', 'category', 'status', 'ward_no', 'block_name', 'place', 'landmark', 'resolved_at', 'resolution_method', 'sla_days'];
+        save('reports', [cols.join(','), ...all.map(r => [...cols.map(c => cell(r[c])), cell(location.origin + location.pathname.replace(/[^/]*$/, '') + reportLink(r))].join(','))]
+          .join('\r\n').replace(/^[^\r]*/, m => m + ',link'));
+      });
+      meta.append(' · ', a);
+    }
+  }
+
+  // Weekly letters to the offices responsible (Purulia only), and to the DM for reports 14 days past deadline.
+  async function letters(){
+    const card = document.getElementById('an-letters-card');
+    const { data, error } = await sb.rpc('kasa_office_letters_public');
+    if (error || !Array.isArray(data)) return;
+    card.hidden = false; card.style.display = '';
+    const day = d => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    document.getElementById('an-letters').innerHTML = table(
+      '<th>Office</th><th class="n">Weekly letters sent</th><th>First</th><th>Latest</th><th class="n">Open reports in latest</th>',
+      data.map(o => `<tr><td>${esc(o.title)}${o.office === 'dm' ? ' <small>(reports 14+ days past deadline)</small>' : ''}</td><td class="n">${o.letters}</td>
+        <td>${day(o.first)}</td><td>${day(o.last)}</td><td class="n">${o.last_count ?? '—'}</td></tr>`),
+      'No letter has been sent yet. An office gets one only in a week when a report in its area is open.');
+  }
+
+  async function moderation(){
+    // Moderation in public: monthly counts only, no IDs (kasa_public_transparency).
+    const { data: tr, error: trErr } = await sb.rpc('kasa_public_transparency');
+    if (trErr || !tr){ document.getElementById('an-mod').innerHTML = '<div class="an-empty">Could not load moderation counts.</div>'; return; }
+    const n = tr.now || {};
+    set('an-mod-now', `${isPurulia ? '' : 'Across all of Parishkar Bengal. '}Right now: ${n.waiting_review ?? 0} waiting for a moderator · ${n.hidden ?? 0} hidden · team of ${n.admins ?? 0} admin${n.admins === 1 ? '' : 's'} and ${n.moderators ?? 0} moderator${n.moderators === 1 ? '' : 's'}. Reasons are shown on each report's own evidence trail.`);
+    const MOD_COLS = [['reported', 'Reports'], ['flagged', 'Flags'], ['hidden', 'Hidden'], ['kept', 'Kept after review'],
+      ['recategorized', 'Category fixed by moderator'], ['auto_recategorized', 'Category fixed automatically'],
+      ['claims_rejected', 'Fake cleanups thrown out'], ['claims_expired', 'Cleanup claims expired'],
+      ['votes_voided', 'Confirmations voided'], ['official_replies', 'Official replies']];
+    const months = (tr.months || []).filter(m => MOD_COLS.some(([k]) => m[k]));
+    document.getElementById('an-mod').innerHTML = table(
+      '<th>Month</th>' + MOD_COLS.map(([, l]) => `<th class="n">${esc(l)}</th>`).join(''),
+      months.map(m => `<tr><td>${esc(new Date(m.month + '-01').toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }))}</td>`
+        + MOD_COLS.map(([k]) => `<td class="n">${m[k] || 0}</td>`).join('') + '</tr>'),
+      'Nothing yet in the last 12 months.');
+  }
+})();

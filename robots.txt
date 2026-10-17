@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /Purulia/admin.html
+Allow: /
+
+Sitemap: https://archiboltmusk.github.io/Purulia/sitemap.xml

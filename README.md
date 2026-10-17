@@ -1,58 +1,84 @@
-# Parishkar Bengal (React Edition)
+# Parishkar
 
-Civic Accountability Platform for West Bengal and India.
+[![Live Site](https://img.shields.io/badge/live-site-brightgreen)](https://archiboltmusk.github.io/Purulia/)
 
-Parishkar is a civic accountability map and public record platform. Residents report civic defects (garbage dumps, choked drainage, broken roads, failing streetlights, drinking water breakdown, dirty public toilets) with live camera capture and verified GPS. Reports remain open on the public ledger until peer residents on the spot verify that the problem has been fixed.
+Parishkar is a civic website for all of India. A resident reports a civic problem at a place with a live photo and GPS; the report is routed to the office responsible and stays open until someone takes a new photo of the spot showing it fixed. Records of public data (officials, leaders, schools, districts, promises) sit alongside it, each figure with its source.
 
-## Features Ported to React
+West Bengal and Purulia are the first test bed: the most detailed data is there, and each feature is built so it can be applied to any district or town in India.
 
-1. **Interactive Civic Map & Issues Explorer**
-   - High-performance Leaflet-based interactive map with custom colored category & status pins (Unresolved Critical/Severe in red/amber, Verifying in indigo, Confirmed Fixed in emerald green).
-   - Real-time filtering by category (Garbage, Drainage, Roads, Lighting, Water, Toilets), status (Unresolved, Verifying, Confirmed Fixed), severity, and keyword/ward search.
-   - Dual-mode basemap: Daylight map (Positron light style) vs Dark map.
-   - GPS "Near Me" radius filter (showing issues within 5 km).
-   - Side-by-side / tabbed List View for rapid triage.
+**Live:** [archiboltmusk.github.io/Purulia](https://archiboltmusk.github.io/Purulia/) · report map: [kasa.html](https://archiboltmusk.github.io/Purulia/kasa.html) · mirror: [purulia.vercel.app](https://purulia.vercel.app/)
 
-2. **Strict Problem Reporting Flow**
-   - Enforces the core Parishkar rule: **Live Camera + Real GPS proof**.
-   - Direct viewfinder integration with live capture fallback.
-   - Category and sub-type selection from official civic categories.
-   - Severity / urgency selection and automatic SLA target calculation.
-   - Offline queueing with persistent localStorage synchronization.
+---
 
-3. **Accountability Case Files & Citizen Verification Engine**
-   - Detailed case dossier with days open vs official SLA counter.
-   - Before & after photo comparison slider.
-   - "Who Answers": official municipal and ward councillor jurisdiction details.
-   - Community verification pipeline:
-     - Witness counter ("I Saw This On Site").
-     - Cleanup claims with proof photo.
-     - Peer quorum confirmation (requires 3 independent witnesses) and dispute handling.
-   - Automated Official Representation Letter generator (with 1-click clipboard copy for filing directly to the West Bengal Grievance Cell or Ward Councillor).
-   - Grievance & RTI reference dockets tracking.
+## Rules
 
-4. **Ward Performance & Cleanliness Rankings**
-   - Real-time ranking of municipal wards by resolution speed, cleanup rate, and active backlogs.
-   - Elected councillor contacts and ward profiles.
-   - Citizen priority voting ("Vote what should be fixed first").
+1. **Only authentic, cited data.** Every figure has a source. No placeholder, estimated or unsourced numbers.
+2. **Reports need a live camera photo and real GPS.** No gallery uploads and no manual map pin. The server places each report from its GPS point.
 
-5. **Municipal Partner Workflow Simulation**
-   - Full 8-step lifecycle: Reported → Approved (SLA set) → Assigned (Order issued) → In Progress → Work Photo (GPS-locked) → Officer Sign-Off → Citizen Verified → Paid (Voucher recorded).
-   - Interactive role switcher: Citizen, Municipal Officer, Contractor/Worker.
-   - Verifiable append-only audit trail.
+---
 
-6. **District Health & Sanitation Insights (NFHS-5)**
-   - Official Ministry of Health and Family Welfare NFHS-5 data comparison across West Bengal districts (Purulia, Bankura, Kolkata, Paschim Barddhaman, Darjeeling).
+## Finding a place
 
-7. **Multilingual Support**
-   - Full native localization in English, Bengali (বাংলা), and Hindi (हिंदी).
+- **Report map (`kasa.html`):** the whole of India is on the map. Tap a state, district, block, gram panchayat or ward to open its area card: open reports, MLA and MP, officials, and what each tier is responsible for.
+- **Share a view:** `kasa.html?at=<lat>,<lng>,<zoom>`.
+- **Data pages** (`data.html`, `circle.html`, `municipality.html`, `promises.html`, `noticeboard.html`): pick a district with `?d=<district-slug>`; otherwise the page uses the district chosen on the map, then Purulia.
+- **Reports outside West Bengal:** placed by `kasa_private.locate_india` from the district outlines in `places/in/`.
+- **Towns without a ward map:** `add-town.html` takes a ward map upload or drawing; moderators approve it before it goes live.
 
-## Development
+---
+
+## Where the data comes from
+
+Every dataset below is produced by a script in `tools/`. Do not edit the output files by hand; change the script or its source and re-run it.
+
+| Data | Files | Built by | Refreshed |
+| --- | --- | --- | --- |
+| State, district and seat outlines, all India | `places/in_states.geojson`, `places/in/` | `tools/build-in-map.py` | by hand |
+| Town ward maps, all India (SBM Urban GIS) | `places/in/wards/`, `places/in/towns.json` | `tools/build-in-wards.py` | by hand |
+| West Bengal blocks, GPs, districts | `places/wb/`, `places/wb_districts.geojson` | `tools/build-wb-local.py` | by hand |
+| West Bengal towns (AMRUT limits, SEC ward counts) | `places/wb_towns.geojson` | `tools/build-wb-towns.py` | by hand |
+| District facts (Census 2011, NFHS-5, JJM, NITI) | `places/wb_district_facts.json` | `tools/build-wb-district-facts.py` | monthly |
+| District officers (DM, ADM, BDO) | `places/wb_officials.json` | `tools/build-wb-officials.py` | monthly |
+| Town councillors (SEC results portal) | `places/councillors/` | `tools/build-wb-councillors.py` | monthly |
+| Ministers, MPLADS | `places/wb_ministers.json`, `places/wb_mplads.json`, `places/mplads/` | `tools/build-wb-reps.py` | monthly |
+| MLA and MP affidavits (ADR/MyNeta) | `places/wb_affidavits.json` | `tools/build-wb-affidavits.py` | monthly |
+| MLAs and MPs (Wikipedia results) | `places/wb_leaders.json`, `places/wb_assembly.geojson` | `tools/build-wb-leaders.py` | by hand |
+| MP work in Lok Sabha (PRS) | `places/wb_record.json` | `tools/build-wb-record.py` | by hand |
+| Other states' MLAs and MPs | `places/in/*.geojson` | `tools/build-in-map.py` | by hand |
+| School data (UDISE+) | Supabase `schools` | `tools/load-wb-schools.sql`, `tools/load-schools.py` | by hand |
+| God's-eye live readings (weather, AQI, fires) | `places/godseye.json` | `tools/build-godseye.py` | every 12 h |
+| State finances (RBI, CAG, MPLADS) | `places/money.json` | `tools/build-money.py` | by hand |
+| Daily public-data fingerprint | `record/` | `tools/public-record.mjs` | daily |
+
+- Monthly rebuilds run in `.github/workflows/refresh-place-data.yml`; `tools/keep-if-changed.py` drops rebuilds that only change the date or shrink the file.
+- The public record (`record/`) is append-only and written only by `.github/workflows/public-record.yml`.
+- Source-data policy and the method for each figure: `methodology.html`.
+
+---
+
+## Running it
+
+A static site: plain HTML, CSS and JavaScript, no build step. The backend is Supabase (Postgres RPCs and edge functions).
 
 ```bash
-npm install
-npm run dev
+git clone https://github.com/archiboltmusk/Purulia.git
+cd Purulia
+python3 -m http.server 8000   # then open http://localhost:8000/
 ```
 
-Dev server runs on `http://0.0.0.0:3000`.
-Build with `npm run build`.
+- **Code map:** [CLAUDE.md](CLAUDE.md) lists every page, shared module, table, RPC and tool.
+- **Backend:** `supabase/migrations/` (database; idempotent, applied to the live project after merge), `supabase/functions/` (edge functions), `supabase/tests/` (`bash supabase/tests/run.sh`).
+- **Tests:** `node --check <file>.js`; `node tests/kasa_photo_meta.test.mjs`; `cd tests/browser && npm ci && npx playwright test`.
+- **Deploy:** pushing to `main` publishes to GitHub Pages (`.github/workflows/github-pages.yml`) and Vercel (`vercel.json`). A Cloudflare worker (`worker.js`, `wrangler.jsonc`) serves share previews.
+- **Run it for another town or district:** [DEPLOY.md](DEPLOY.md). Purulia-specific settings are in `city.js`; other towns in `places.js`.
+- **Operations:** [RUNBOOK.md](RUNBOOK.md); database setup: [SETUP-KASA.md](SETUP-KASA.md).
+
+---
+
+## Contributing
+
+Code, ward maps, officials' contacts, sourced data and translations are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and follow the [Code of Conduct](CODE_OF_CONDUCT.md). Report security problems privately as described in [SECURITY.md](SECURITY.md). Governance: [GOVERNANCE.md](GOVERNANCE.md).
+
+## Licence
+
+Code: [MIT](LICENSE). Report data published by Parishkar: CC BY 4.0 (see `terms.html`).

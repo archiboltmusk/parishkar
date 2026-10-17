@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="theme-init.js"></script>
+<style>
+/* Critical first paint: loader colours and loader rules, inline so the loader paints before kasa.css loads. Keep in step with kasa.css. */
+html,body{margin:0;background:#f8f6f2;}
+html[data-theme="dark"],html[data-theme="dark"] body{background:#0a0805;}
+.k-splash{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8rem;background:#f8f6f2;transition:opacity .65s ease,visibility .65s ease;}
+html[data-theme="dark"] .k-splash{background:#0a0805;}
+.k-splash.k-splash-out{opacity:0;visibility:hidden;pointer-events:none;}
+.k-splash .ld-mandala{width:70px;height:70px;animation:kSpin 5s linear infinite;opacity:.65;}
+.k-splash .ld-label{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.75rem;letter-spacing:.55em;color:rgba(221,51,51,.85);text-transform:uppercase;animation:kLdPulse 1.8s ease-in-out infinite;}
+@keyframes kSpin{to{transform:rotate(360deg);}}
+@keyframes kLdPulse{0%,100%{opacity:.35;}50%{opacity:1;}}
+@media(prefers-reduced-motion:reduce){.k-splash .ld-mandala,.k-splash .ld-label{animation:none;}}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Parishkar Bengal — Report a civic problem in 30 seconds</title>
+<meta name="description" content="A public map of civic problems across West Bengal: garbage, drains, roads, streetlights, hand pumps, anganwadis, health centres, schools and illegal activity. Every report is public, every ward, block and district is counted, and nothing is marked fixed until people on the spot confirm it.">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:title" content="Parishkar Bengal — Report a civic problem in 30 seconds">
+<meta property="og:description" content="West Bengal's civic problem map. Live photo and GPS. Every report public. Nothing marked fixed until people on the spot confirm it.">
+<meta property="og:image" content="https://archiboltmusk.github.io/Purulia/og-bengal.jpg">
+<meta property="og:url" content="https://archiboltmusk.github.io/Purulia/kasa.html">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23DD3333' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%23DD3333' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23DD3333'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://cnmikcyvyamplbldiivp.supabase.co" crossorigin>
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Ol+Chiki:wght@400;600;700&family=Google+Sans+Flex:wght@400;500;600;700&family=Google+Sans+Code:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Ol+Chiki:wght@400;600;700&family=Google+Sans+Flex:wght@400;500;600;700&family=Google+Sans+Code:wght@400;500&display=swap"></noscript>
+<link rel="preload" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous"></noscript>
+<link rel="preload" href="kasa.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="digest-sheet.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="kasa.css"><link rel="stylesheet" href="digest-sheet.css"></noscript>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="kasa-icon-192.png">
+
+<!-- async, not defer: the page runs without waiting for the 800 KB map library; kasa.js waits for it only to draw the map. -->
+<script async fetchpriority="low" id="k-maplibre" src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/idb-keyval@6.2.1/dist/umd.js" integrity="sha384-oM43ZjLL5cj/w3ORvbvwAubendEp51/buLZ9CGEMjp5ExAxNxAC7N7GJ2X2Oreb9" crossorigin="anonymous"></script>
+<script defer src="config.js"></script>
+<script defer src="categories.js"></script>
+<script defer src="city.js"></script>
+<script defer src="places.js"></script>
+<script defer src="version.js"></script>
+<script defer src="kasa-i18n.js"></script>
+<script defer src="translate-fix.js"></script>
+<script defer src="kasa-photo-meta.js"></script>
+<script defer src="boundary-live.js"></script>
+<script defer src="money-metrics.js"></script>
+<script defer src="map-layers.js"></script>
+<script defer src="kasa.js"></script>
+<script defer src="digest-sheet.js"></script>
+</head>
+<body data-app-layout>
+<div class="k-splash" id="k-splash" aria-hidden="true">
+  <svg class="ld-mandala" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="44" stroke="#DD3333" stroke-width=".5" opacity=".5"/>
+    <circle cx="50" cy="50" r="30" stroke="#DD3333" stroke-width=".3" stroke-dasharray="3 6" opacity=".6"/>
+    <circle cx="50" cy="50" r="16" stroke="#DD3333" stroke-width=".5" opacity=".7"/>
+    <circle cx="50" cy="50" r="4" fill="#DD3333" opacity=".5"/>
+  </svg>
+  <div class="ld-label"><span>Parishkar</span> <span id="k-splash-place"></span></div>
+</div>
+<script src="bug-report.js"></script>
+
+<div class="k-offline" id="k-offline" hidden>
+  <span class="k-offline-dot"></span>
+  <span data-i18n="offline_banner">Offline — reports will queue and upload when connected</span>
+</div>
+
+<div class="k-iab" id="k-iab" role="status" hidden>
+  <span><strong data-i18n="iab_title">📍 Turn on location for reporting</strong> <span data-i18n="iab_msg">GPS doesn’t work inside this app. Open in your browser to report.</span> <span id="k-iab-hint" data-i18n="iab_hint" hidden>If nothing opens, tap ⋯ and choose “Open in external browser”.</span></span>
+  <a class="k-iab-open" id="k-iab-open" href="#" data-i18n="iab_open">Open in browser</a>
+  <button type="button" class="k-iab-copy" data-iab-copy data-i18n="iab_copy">Copy link</button>
+  <button type="button" class="k-iab-close" id="k-iab-close" aria-label="Close">✕</button>
+</div>
+
+<nav class="k-nav">
+  <a href="kasa.html" class="k-nav-logo k-wordmark" aria-label="Parishkar Bengal">
+    <span class="k-mark" aria-hidden="true"></span>
+    <span class="k-wordmark-first">Parishkar</span>&nbsp;<span class="k-wordmark-second">Bengal</span>
+  </a>
+  <button type="button" class="k-place-pick" id="k-place-pick" aria-haspopup="dialog" aria-label="Choose a place">▾</button>
+  <a href="changelog.html#done" class="k-version" id="k-version" hidden></a>
+<dialog class="k-place-dialog" id="k-place-dialog" aria-labelledby="k-place-title">
+  <div class="k-place-head"><b id="k-place-title" data-i18n="pk_title">Choose a place</b>
+    <button type="button" class="k-place-x" data-close aria-label="Close">✕</button></div>
+  <p class="k-place-note" data-i18n="pk_note">This only moves the map. To report, you still need to be at the spot: the photo is taken live and your real location is used.</p>
+  <input type="search" class="k-place-search" id="k-place-search" placeholder="Search a state or district" aria-label="Search a state or district" autocomplete="off">
+  <div class="k-place-list" id="k-place-list"></div>
+</dialog>
+  <div class="k-nav-links">
+    <a href="index.html" data-i18n="nav_home">Home</a>
+    <a href="blueprint.html" data-i18n="nav_blueprint">Blueprint</a>
+    <a href="kasa.html" class="k-nav-active" data-i18n="nav_kasa">Parishkar</a>
+  </div>
+  <div class="k-nav-right">
+    <button type="button" class="k-nav-mine" data-mine data-i18n="nav_mine">Your reports</button>
+    <div class="k-lang-switch" role="group" aria-label="Language">
+      <button type="button" class="k-lang-btn k-lang-active" data-lang="en">EN</button>
+      <button type="button" class="k-lang-btn" data-lang="bn">বাং</button>
+      <button type="button" class="k-lang-btn" data-lang="hi">हिं</button>
+      <button type="button" class="k-lang-btn" data-lang="sat" title="ᱥᱟᱱᱛᱟᱲᱤ (Santali)">ᱥᱟᱱ</button>
+    </div>
+    <button type="button" class="k-theme-toggle" id="k-theme-toggle" aria-label="Toggle dark/light mode" title="Toggle dark/light mode"><span aria-hidden="true">☀️</span></button>
+    <div class="k-social-menu">
+      <button type="button" class="k-social-toggle" id="k-social-toggle" aria-haspopup="true" aria-expanded="false" aria-controls="k-social-dropdown" data-i18n-title="social_follow" title="Follow us"><span aria-hidden="true">🔗</span></button>
+      <div class="k-social-dropdown" id="k-social-dropdown" hidden>
+        <a href="https://t.me/ParishkarPurulia" target="_blank" rel="noopener"><span class="k-social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#26A5E4" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></span> @ParishkarPurulia</a>
+        <a href="https://x.com/parishkarprl" target="_blank" rel="noopener"><span class="k-social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#000"/><path fill="#fff" d="M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z"/></svg></span> @parishkarprl</a>
+        <a href="https://www.instagram.com/parishkarpurulia/" target="_blank" rel="noopener"><span class="k-social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><defs><linearGradient id="k-ig-grad" x1="24" y1="24" x2="0" y2="0"><stop offset="0" stop-color="#FEDA75"/><stop offset=".3" stop-color="#FA7E1E"/><stop offset=".6" stop-color="#D62976"/><stop offset=".85" stop-color="#962FBF"/><stop offset="1" stop-color="#4F5BD5"/></linearGradient></defs><path fill="url(#k-ig-grad)" d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg></span> @parishkarpurulia</a>
+      </div>
+    </div>
+    <button type="button" class="k-bell" data-notify data-i18n-title="notify_title" title="Alerts" aria-label="Alerts"><span aria-hidden="true">🔔</span><i class="k-bell-dot" hidden></i></button>
+    <button type="button" class="k-nav-cta" data-action="report" data-i18n="nav_report">Report →</button>
+    <button type="button" class="k-nav-more" id="k-more-btn" aria-controls="k-drawer" aria-expanded="false">
+      <span class="k-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="k-nav-more-label" data-i18n="nav_more">More</span>
+    </button>
+  </div>
+</nav>
+
+
+<section class="k-map-section" aria-label="Report map">
+  <div id="k-map" role="application" aria-label="Map of reports"></div>
+  <div class="k-list" id="k-list" hidden>
+    <div class="k-list-head">
+      <span class="k-list-count" id="k-list-count"></span>
+      <input type="search" id="k-list-search" class="k-list-search" data-i18n-placeholder="list_search" placeholder="Search ward number, place or problem" aria-label="Search reports">
+      <button type="button" class="k-csv-btn" data-csv="filtered" data-i18n="csv_btn">⬇ CSV</button>
+      <select id="k-sort" class="k-filter-select" aria-label="Sort">
+        <option value="urgent" data-i18n="sort_urgent">Most urgent</option>
+        <option value="newest" data-i18n="sort_newest">Newest</option>
+        <option value="seen" data-i18n="sort_seen">Most seen</option>
+        <option value="oldest" data-i18n="sort_oldest">Longest unresolved</option>
+        <option value="ward" data-i18n="sort_ward">By ward</option>
+      </select>
+    </div>
+    <div class="k-list-items" id="k-list-items"></div>
+  </div>
+
+  <div class="k-map-topbar">
+    <button type="button" class="k-filter-toggle" id="k-filter-toggle" aria-controls="k-filter-bar" aria-expanded="false">
+      <span aria-hidden="true">⚲</span> <span data-i18n="filters_btn">Filters</span> <span class="k-filter-count" id="k-filter-count" hidden></span>
+    </button>
+    <button type="button" class="k-nearby-btn" id="k-nearby-btn" aria-pressed="false" data-i18n="nearby_btn">Near me</button>
+    <div class="k-filter-bar" id="k-filter-bar">
+      <select id="k-filter-category" class="k-filter-select" aria-label="Issue type"></select>
+      <select id="k-layer-select" class="k-filter-select" aria-label="Map layer">
+        <option value="reports">Reports</option>
+        <option value="demands">Demands to leaders</option>
+        <option value="schools">Schools: checked by residents</option>
+        <option value="money-selfPaid">Money: own taxes as % of spending</option>
+        <option value="money-unspent">Money: budget left unspent</option>
+        <option value="money-ucs">Money: grants with no proof of use</option>
+        <option value="money-mplads">Money: MP fund spent (Lok Sabha)</option>
+        <option value="money-seats">Money: MP fund by seat (West Bengal)</option>
+      </select>
+      <select id="k-filter-status" class="k-filter-select" aria-label="Status">
+        <option value="" data-i18n="filter_all_status">All Status</option>
+        <option value="open" data-i18n="status_open">Unresolved</option>
+        <option value="claimed" data-i18n="status_claimed">Verifying</option>
+        <option value="resolved" data-i18n="status_resolved">Resolved</option>
+      </select>
+      <select id="k-filter-severity" class="k-filter-select" aria-label="Severity">
+        <option value="" data-i18n="filter_all_sev">All Severity</option>
+        <option value="minor" data-i18n="sev_minor">Minor</option>
+        <option value="severe" data-i18n="sev_severe">Severe</option>
+        <option value="critical" data-i18n="sev_critical">Critical</option>
+      </select>
+      <input type="number" id="k-search-ward" class="k-filter-select k-filter-ward" placeholder="Ward #" min="1" max="23" inputmode="numeric" aria-label="Ward number">
+    </div>
+    <div class="k-view-toggle" role="tablist" aria-label="View">
+      <button type="button" class="k-view-btn k-view-active" data-view="map" role="tab" aria-selected="true" data-i18n="view_map">Map</button>
+      <button type="button" class="k-view-btn" data-view="list" role="tab" aria-selected="false" data-i18n="view_list">List</button>
+    </div>
+  </div>
+
+  <div class="k-map-pill" aria-live="polite">
+    <span class="k-pill-num" id="k-pill-active">—</span>
+    <span class="k-pill-label" data-i18n="pill_active">Unresolved</span>
+    <span class="k-pill-sep">·</span>
+    <span class="k-pill-num" id="k-pill-total">—</span>
+    <span class="k-pill-label" data-i18n="pill_reports">Reports</span>
+    <span class="k-pill-sep" id="k-fixed-chip-sep" hidden>·</span>
+    <button type="button" class="k-pill-fixed" id="k-fixed-chip" hidden aria-controls="k-fixed-strip" aria-expanded="false">
+      ✓ <span class="k-pill-num" id="k-fixed-chip-n"></span> <span class="k-pill-label" data-i18n="fixed_chip">fixed</span>
+    </button>
+  </div>
+
+  <div class="k-ward-card" id="k-ward-card" hidden></div>
+  <div class="k-still" id="k-still" hidden role="dialog" aria-live="polite"></div>
+
+  <button type="button" class="k-near" id="k-near" hidden></button>
+
+  <div class="k-fixed-strip" id="k-fixed-strip" hidden>
+    <div class="k-fixed-strip-head">
+      <span data-i18n="fixed_title">Recently fixed</span>
+      <button type="button" class="k-fixed-strip-close" id="k-fixed-strip-close" aria-label="Close">✕</button>
+    </div>
+    <div class="k-fixed-strip-list" id="k-fixed-strip-list"></div>
+  </div>
+
+  <div class="k-map-legend" aria-hidden="true">
+    <span><i class="k-dot k-dot-minor"></i> <span data-i18n="sev_minor">Minor</span></span>
+    <span><i class="k-dot k-dot-severe"></i> <span data-i18n="sev_severe">Severe</span></span>
+    <span><i class="k-dot k-dot-critical"></i> <span data-i18n="sev_critical">Critical</span></span>
+    <span><i class="k-dot k-dot-claimed"></i> <span data-i18n="status_claimed">Verifying</span></span>
+    <span><i class="k-dot k-dot-resolved"></i> <span data-i18n="status_resolved">Resolved</span></span>
+  </div>
+  <button type="button" class="k-fab-menu" id="k-fab-menu" aria-controls="k-drawer" data-i18n-title="nav_more" title="Menu">
+    <span class="k-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+  </button>
+  <button type="button" class="k-map-report-btn" data-action="report" aria-label="Report a problem">
+    <svg class="k-map-report-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg> <span data-i18n="map_report">Report a problem</span>
+  </button>
+</section>
+
+<div class="k-drawer-backdrop" id="k-drawer-backdrop" hidden></div>
+<aside class="k-drawer" id="k-drawer" aria-label="More" aria-hidden="true" inert>
+  <!-- ══ Header ══ -->
+  <div class="k-drawer-head">
+    <div class="k-wordmark-sm">
+      <span class="k-mark" aria-hidden="true"></span>
+      <span class="k-wordmark-text"><span class="k-wordmark-first">Parishkar</span>&nbsp;<span class="k-wordmark-second">Purulia</span></span>
+    </div>
+    <button type="button" class="k-drawer-close" id="k-drawer-close" aria-label="Close">✕</button>
+  </div>
+
+  <!-- ══ Primary Actions ══ -->
+  <nav class="k-drawer-main">
+    <button type="button" class="k-drawer-item" data-mine data-i18n="nav_mine">
+      <span class="k-drawer-icon" aria-hidden="true">📋</span>
+      <span class="k-drawer-text">Your Reports</span>
+      <span class="k-drawer-sub" data-i18n="drawer_your_reports_sub">Track your submissions</span>
+    </button>
+    <button type="button" class="k-drawer-item" data-view="list" data-i18n="nav_list">
+      <span class="k-drawer-icon" aria-hidden="true">📊</span>
+      <span class="k-drawer-text">Ward Accountability</span>
+      <span class="k-drawer-sub" data-i18n="drawer_ward_sub">See who's responsible</span>
+    </button>
+    <button type="button" class="k-drawer-item" data-checkq>
+      <span class="k-drawer-icon" aria-hidden="true">👆</span>
+      <span class="k-drawer-text" data-i18n="drawer_check">Check reports near you</span>
+      <span class="k-drawer-sub" data-i18n="drawer_check_sub">Swipe through open problems around you</span>
+    </button>
+    <a class="k-drawer-item" href="communities.html">
+      <span class="k-drawer-icon" aria-hidden="true">🤝</span>
+      <span class="k-drawer-text" data-i18n="drawer_groups">Volunteer communities</span>
+      <span class="k-drawer-sub" data-i18n="drawer_groups_sub">Find a group near you, or register yours</span>
+    </a>
+    <a class="k-drawer-item" href="assistant.html">
+      <span class="k-drawer-icon" aria-hidden="true">💬</span>
+      <span class="k-drawer-text" data-i18n="drawer_ask">Ask Parishkar</span>
+      <span class="k-drawer-sub" data-i18n="drawer_ask_sub">Help in Bengali, Hindi or English</span>
+    </a>
+  </nav>
+
+  <!-- ══ Secondary Navigation ══ -->
+  <nav class="k-drawer-more" aria-label="Resources">
+    <button type="button" class="k-drawer-toggle" id="k-drawer-toggle-more" aria-controls="k-drawer-more-list" aria-expanded="false">
+      <span data-i18n="drawer_more">More Resources</span>
+      <span aria-hidden="true">›</span>
+    </button>
+    <div class="k-drawer-more-list" id="k-drawer-more-list" hidden>
+      <p class="k-drawer-group" data-i18n="drawer_grp_act">Act here</p>
+      <a href="adopt.html" class="k-drawer-link" data-i18n="nav_adopt_page">Adopt a spot</a>
+      <a href="dogs.html" class="k-drawer-link" data-i18n="nav_dogs">Community dogs</a>
+      <a href="works.html" class="k-drawer-link" data-i18n="nav_works">Public works warranty</a>
+      <a href="snakes.html" class="k-drawer-link" data-i18n="nav_snakes">Snakes</a>
+      <a href="pandals.html" class="k-drawer-link" data-i18n="nav_pandal">Swachh Pandal</a>
+      <a href="toilets.html" class="k-drawer-link" data-i18n="nav_toilets">Public toilets</a>
+      <a href="schools.html" class="k-drawer-link" data-i18n="nav_schools">Schools</a>
+      <p class="k-drawer-group" data-i18n="drawer_grp_records">Records and money</p>
+      <a href="promises.html" class="k-drawer-link" data-i18n="nav_promises">Promises: who promised what</a>
+      <a href="noticeboard.html" class="k-drawer-link" data-i18n="nav_noticeboard">Ask your leaders: public demands</a>
+      <a href="money.html" class="k-drawer-link" data-i18n="nav_tax">Tax and spending</a>
+      <a href="waste.html" class="k-drawer-link" data-i18n="nav_waste">Where the waste goes</a>
+      <a href="municipality.html" class="k-drawer-link" data-i18n="nav_money">Who runs the municipality</a>
+      <a href="analytics.html" class="k-drawer-link" data-i18n="footer_analytics">Analytics</a>
+      <a href="compare.html" class="k-drawer-link" data-i18n="nav_compare">Compare districts</a>
+      <a href="record.html" class="k-drawer-link" data-i18n="nav_record">The record: evidence and remedies</a>
+      <p class="k-drawer-group" data-i18n="drawer_grp_tools">Tools</p>
+      <a href="digest.html" class="k-drawer-link" data-i18n="nav_digest">Weekly ward digest</a>
+      <a href="routes.html" class="k-drawer-link" data-i18n="nav_routes">Walk, run, cycle</a>
+      <a href="calendar.html" class="k-drawer-link" data-i18n="nav_calendar">Civic calendar</a>
+</div>
+  </nav>
+
+
+  <!-- ══ Language Selector ══ -->
+  <div class="k-drawer-lang">
+    <div class="k-lang-switch" role="group" aria-label="Language">
+      <button type="button" class="k-lang-btn k-lang-active" data-lang="en">EN</button>
+      <button type="button" class="k-lang-btn" data-lang="bn">বাং</button>
+      <button type="button" class="k-lang-btn" data-lang="hi">हिं</button>
+      <button type="button" class="k-lang-btn" data-lang="sat" title="ᱥᱟᱱᱛᱟᱲᱤ (Santali)">ᱥᱟᱱ</button>
+    </div>
+  <button type="button" class="k-daylight" id="k-daylight" aria-pressed="false">☀️ <span data-i18n="daylight">Daylight map (for bright sun)</span></button>
+  </div>
+<header class="k-hero">
+  <div class="k-wordmark-lg">
+    <span class="k-mark" aria-hidden="true"></span>
+    <span class="k-wordmark"><span class="k-wordmark-first">Parishkar</span>&nbsp;<span class="k-wordmark-second">Purulia</span></span>
+  </div>
+  <h1 class="k-hero-title">
+    <span data-i18n="hero_l1">See a problem?</span><br>
+    <em data-i18n="hero_l2">Report it in 30 seconds.</em>
+  </h1>
+  <p class="k-hero-sub" data-i18n="hero_sub">Garbage, blocked drains, broken roads, dark streetlights, illegal activity. Every report is public, every ward is ranked — and nothing is marked fixed until people on the spot confirm it.</p>
+  <div class="k-hero-actions">
+    <button type="button" class="k-hero-cta" data-action="report">
+      <span class="k-hero-cta-icon" aria-hidden="true">📷</span>
+      <span data-i18n="hero_cta">Report Now</span>
+    </button>
+    <a class="k-hero-link" href="#k-trust" id="k-hero-how" hidden data-i18n="hero_how">How verification works ↓</a>
+    <button type="button" class="k-hero-link" data-install hidden data-i18n="install_btn">📲 Install the app</button>
+  </div>
+</header>
+<section class="k-ticker" aria-hidden="true">
+  <div class="k-ticker-track" id="k-ticker-track"></div>
+</section>
+
+<section class="k-stats">
+  <div class="k-stat"><div class="k-stat-n" id="k-stat-total">—</div><div class="k-stat-l" data-i18n="stat_reports">Reports</div></div>
+  <div class="k-stat"><div class="k-stat-n" id="k-stat-open">—</div><div class="k-stat-l" data-i18n="stat_open">Unresolved</div></div>
+  <div class="k-stat"><div class="k-stat-n k-stat-green" id="k-stat-resolved">—</div><div class="k-stat-l" data-i18n="stat_resolved">Verified fixed</div></div>
+  <div class="k-stat"><div class="k-stat-n k-stat-red" id="k-stat-fake">—</div><div class="k-stat-l" data-i18n="stat_fake">Fake cleanups caught</div></div>
+</section>
+
+<details class="k-lb-section k-fixed-section k-acc" id="k-fixed" open>
+  <summary class="k-section-head">
+    <div class="k-section-num" data-i18n="fixed_num">✓ · Verified fixes</div>
+    <h2 class="k-section-title" data-i18n="fixed_title">Recently fixed</h2>
+    <p class="k-section-sub" data-i18n="fixed_sub">Problems that neighbours went back and confirmed were fixed, and how fast it happened.</p>
+  </summary>
+  <div class="k-fixed-list" id="k-fixed-list"></div>
+</details>
+
+<details class="k-trust-section k-acc" id="k-trust" hidden>
+  <summary class="k-section-head">
+    <div class="k-section-num" data-i18n="trust_num">03 · Verification</div>
+    <h2 class="k-section-title" data-i18n="trust_title">Why “resolved” here means resolved</h2>
+    <p class="k-section-sub" data-i18n="trust_sub">No official or party worker can close a report by saying so. Neighbours on the spot confirm a fix. An admin can accept a cleanup only after checking the photos, and the report then says so openly. These rules run on the server — the website can't skip them.</p>
+  </summary>
+  <ol class="k-trust-steps" id="k-trust-steps"></ol>
+</details>
+
+<details class="k-lb-section k-acc" id="k-lb">
+  <summary class="k-section-head">
+    <div class="k-section-num" data-i18n="lb_num">04 · Accountability</div>
+    <h2 class="k-section-title" data-i18n="lb_title">Ward accountability</h2>
+    <p class="k-section-sub" data-i18n="lb_sub">Ranked by unresolved reports. Fake cleanup claims the public caught count against the ward.</p>
+  </summary>
+  <input type="search" id="k-lb-search" class="k-list-search k-lb-search" data-i18n-placeholder="lb_search" placeholder="Find your ward: number or councillor" aria-label="Find your ward">
+  <div class="k-lb-list" id="k-lb-list">
+    <div class="k-lb-empty" data-i18n="lb_loading">Loading…</div>
+  </div>
+</details>
+
+<details class="k-chain-section k-acc" id="k-chain-sec">
+  <summary class="k-section-head">
+    <div class="k-section-num" data-i18n="chain_num">05 · Responsibility</div>
+    <h2 class="k-section-title" data-i18n="chain_title">Who's responsible</h2>
+    <p class="k-section-sub" data-i18n="chain_sub">Each kind of problem has its own chain, from the frontline officer to the top.</p>
+  </summary>
+  <div class="k-chain-tabs" id="k-chain-tabs" role="tablist"></div>
+  <div class="k-chain" id="k-chain"></div>
+</details>
+
+<details class="k-auth-section k-acc" id="k-auth-sec">
+  <summary class="k-section-head">
+    <div class="k-section-num" data-i18n="auth_num">06 · Representatives</div>
+    <h2 class="k-section-title" data-i18n="auth_title">Elected representatives</h2>
+    <p class="k-section-sub" id="k-auth-sub"></p>
+  </summary>
+  <div class="k-auth-grid" id="k-auth-grid"></div>
+</details>
+
+<footer class="k-footer">
+  <div>
+    <div class="k-footer-brand">
+      <span class="k-mark" aria-hidden="true"></span>
+      <span class="k-wordmark"><span class="k-wordmark-first">Parishkar</span>&nbsp;<span class="k-wordmark-second">Purulia</span></span>
+    </div>
+    <div data-i18n="footer_left">Parishkar Bengal · A civic tool for West Bengal</div>
+    <p class="k-footer-legal" data-i18n="footer_allegation">Reports are citizen allegations, not verified facts. Parishkar Bengal is a neutral platform and not affiliated with any party or government body.</p>
+    <button type="button" class="k-footer-data" data-csv="all" data-i18n="csv_all">⬇ Download all reports (CSV)</button>
+    <button type="button" class="k-footer-data" data-geojson="all" data-i18n="geojson_all">⬇ Map file (GeoJSON)</button>
+    <p class="k-footer-legal"><span data-i18n="csv_license">Report data is open under</span> <a href="https://creativecommons.org/licenses/by/4.0/" rel="license noopener" target="_blank">CC BY 4.0</a>. <span data-i18n="csv_license_2">Credit “Parishkar Bengal”. Photos are not covered.</span></p>
+    <p class="k-footer-social"><span data-i18n="footer_founder">Founder</span>: <a href="https://instagram.com/anupamstorm_" target="_blank" rel="noopener" data-i18n="footer_instagram">📷 @anupamstorm_</a></p>
+    <p class="k-footer-social"><span data-i18n="footer_project">Project</span>: <a href="https://www.instagram.com/parishkarpurulia/" target="_blank" rel="noopener" data-i18n="footer_project_instagram">📷 @parishkarpurulia</a></p>
+  </div>
+  <nav class="k-footer-links" aria-label="Legal">
+    <a href="methodology.html" data-i18n="footer_methodology">How it works</a>
+    <a href="rules.html" data-i18n="footer_rules">Rules</a>
+    <a href="terms.html" data-i18n="footer_terms">Terms of Use</a>
+    <a href="privacy.html" data-i18n="footer_privacy">Privacy Policy</a>
+    <a href="grievance.html" data-i18n="footer_grievance">Grievance Officer</a>
+    <a href="#" data-bug-report data-i18n="footer_bug">Report a bug</a>
+    <a href="https://buymeacoffee.com/anupamstorm" target="_blank" rel="noopener" data-i18n="footer_coffee">Buy me a coffee</a>
+  </nav>
+</footer>
+</aside>
+
+
+
+<!-- New report -->
+<div class="k-modal" id="k-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-step-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <!-- One screen: camera, two one-tap pickers (how bad, waste type), then submit. No
+         category, ward or description fields — the server works those out from the photo
+         and the GPS point (see
+         kasa_create_report / kasa_private.locate). The location runs silently in the
+         background from the moment this opens (see openReport()). The old fields still
+         exist, hidden, only so the rest of the JS (edit/prefill paths, legacy fallback)
+         keeps working without change. -->
+    <div class="k-modal-step" data-step="1">
+      <div class="k-cat-warning" id="k-cat-warning" hidden></div>
+      <h3 class="k-modal-title" id="k-step-title" data-i18n="step2_title">Take a photo</h3>
+      <p class="k-modal-sub" data-i18n="step2_sub">Show the problem clearly. Avoid people's faces and number plates.</p>
+      <button type="button" class="k-photo-input" id="k-photo-btn">
+        <span class="k-photo-icon" aria-hidden="true">📷</span>
+        <span class="k-photo-text" data-i18n="step1_camera">Open the camera and take a photo</span>
+      </button>
+      <div class="k-photo-preview" id="k-photo-preview"></div>
+      <div class="k-photo-extras" id="k-photo-extras"></div>
+      <button type="button" class="k-btn k-btn-secondary k-photo-more" id="k-photo-more" hidden data-i18n="photo_more">📷 Add another photo</button>
+      <div class="k-cat-warning" id="k-photo-note" hidden></div>
+      <div class="k-coords" id="k-coords" data-i18n="step3_no_loc">No location set yet</div>
+      <div class="k-field-note" id="k-place" hidden></div>
+      <button type="button" class="k-btn k-btn-secondary" id="k-gps-btn" data-i18n="step3_gps" hidden>⊕ Use my location</button>
+      <p class="k-privacy" id="k-iab-report-note" data-i18n="loc_iab" hidden>Location doesn’t work inside this app, and reports need live GPS. Open this page in your browser to report.</p>
+      <a class="k-btn k-btn-primary" id="k-iab-report" href="#" data-i18n="iab_open" hidden>Open in browser</a>
+      <button type="button" class="k-btn k-btn-secondary" id="k-iab-report-copy" data-iab-copy data-i18n="iab_copy" hidden>Copy link</button>
+      <div class="k-field-note" data-i18n="boundary_note" hidden>Ward boundaries on this map are approximate. Check the ward before you submit.</div>
+      <div class="k-field" hidden>
+        <label for="k-landmark" data-i18n="step3_landmark">Nearest landmark</label>
+        <input type="text" id="k-landmark" class="k-input" maxlength="140" data-i18n-placeholder="step3_landmark_ph" placeholder="e.g. near Ramakrishna medical shop, RT Street">
+      </div>
+      <div class="k-field-row" hidden>
+        <div class="k-field" id="k-ward-field">
+          <label for="k-ward" data-i18n="step3_ward">Ward</label>
+          <select id="k-ward" class="k-input"><option value="">—</option></select>
+        </div>
+      </div>
+      <div class="k-field" hidden>
+        <label for="k-desc" data-i18n="step3_desc">What's wrong? (optional)</label>
+        <textarea id="k-desc" class="k-input k-textarea" maxlength="500" data-i18n-placeholder="step3_desc_ph" placeholder="One sentence is enough"></textarea>
+      </div>
+      <div class="k-voice" id="k-voice" hidden>
+        <button type="button" class="k-btn k-btn-secondary" id="k-voice-btn" aria-pressed="false" data-i18n="voice_btn">🎤 Say what's wrong (optional)</button>
+        <div class="k-voice-text" id="k-voice-text" aria-live="polite"></div>
+      </div>
+      <!-- One tap each, with defaults: severity starts at Minor (sets the 7/3/1-day deadline);
+           the problem type is optional (picking one files it under the right category). -->
+      <div class="k-field">
+        <span class="k-field-label" data-i18n="step3_sev">How bad?</span>
+        <div class="k-sev-cards" id="k-severity" role="radiogroup">
+          <button type="button" data-sev="minor" role="radio" aria-checked="true"><i class="k-dot k-dot-minor"></i><b data-i18n="sev_minor">Minor</b><span data-i18n="sev_minor_d">A few bags or scattered litter, under 1 m². Fix within 7 days.</span></button>
+          <button type="button" data-sev="severe" role="radio" aria-checked="false"><i class="k-dot k-dot-severe"></i><b data-i18n="sev_severe">Severe</b><span data-i18n="sev_severe_d">A big heap, about the size of an auto-rickshaw (1–5 m²). Fix within 3 days.</span></button>
+          <button type="button" data-sev="critical" role="radio" aria-checked="false"><i class="k-dot k-dot-critical"></i><b data-i18n="sev_critical">Critical</b><span data-i18n="sev_critical_d">Spread over the road or blocking a drain (over 5 m²), or a health risk. Fix within 1 day.</span></button>
+        </div>
+      </div>
+      <div class="k-field k-issue">
+        <label class="k-field-label" for="k-issue-search" data-i18n="issue_label">What's the problem? (optional)</label>
+        <input type="search" id="k-issue-search" class="k-input" autocomplete="off" data-i18n-placeholder="issue_search_ph" placeholder="Search: toilet, manhole, burning…">
+        <div id="k-issues" role="radiogroup" aria-labelledby="k-issue-search"></div>
+        <div class="k-field-note" id="k-issue-route" aria-live="polite" hidden></div>
+      </div>
+      <button type="button" class="k-btn k-btn-primary k-slide" id="k-submit" disabled aria-keyshortcuts="Enter">
+        <span class="k-slide-fill" aria-hidden="true"></span>
+        <span class="k-slide-label" id="k-submit-label" data-i18n="step3_slide">Slide to send report</span>
+        <span class="k-slide-knob" aria-hidden="true">»</span>
+      </button>
+      <ol class="k-submit-steps" id="k-submit-steps" aria-live="polite" hidden></ol>
+      <div class="k-privacy" data-i18n="step3_privacy">🔒 Reports are anonymous. The photo, location and ward are public; nothing identifies you.</div>
+      <div class="k-privacy"><span data-i18n="step3_consent">By submitting you confirm this is true to the best of your knowledge and you agree to the</span> <a href="terms.html" target="_blank" rel="noopener" data-i18n="footer_terms">Terms of Use</a>.</div>
+    </div>
+
+    <div class="k-modal-step" data-step="done" hidden>
+      <div class="k-done-icon" aria-hidden="true">✓</div>
+      <h3 class="k-modal-title k-center" id="k-done-title" data-i18n="done_title">Report filed</h3>
+      <p class="k-modal-sub k-center" id="k-done-sub" data-i18n="done_sub">It's on the public map now.</p>
+      <button type="button" class="k-btn k-btn-primary" id="k-done-watch" hidden data-i18n="done_watch">🔔 Tell me when it's fixed</button>
+      <a class="k-btn k-btn-secondary" id="k-wa-escalate" href="#" target="_blank" rel="noopener" data-i18n="done_wa">Notify Municipality on WhatsApp →</a>
+      <button type="button" class="k-btn k-btn-secondary" id="k-done-share" data-i18n="done_share">Share this report</button>
+      <button type="button" class="k-btn k-btn-ghost" data-close data-i18n="done_close">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report detail -->
+<div class="k-modal k-sheet-modal" id="k-sheet" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet k-sheet" role="dialog" aria-modal="true" aria-label="Report details">
+    <div class="k-modal-handle"></div>
+    <div class="k-sheet-head" id="k-sheet-head"></div>
+    <div class="k-sheet-body" id="k-sheet-body"></div>
+    <div class="k-sheet-foot" id="k-sheet-foot"></div>
+  </div>
+</div>
+
+<!-- On-site evidence: claim a cleanup / confirm / dispute -->
+<div class="k-modal" id="k-ev-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-ev-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-ev-title"></h3>
+    <p class="k-modal-sub" id="k-ev-sub"></p>
+    <div class="k-ev-step">
+      <div class="k-ev-num">1</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="ev_loc">Be at the spot</div>
+        <div class="k-ev-status" id="k-ev-loc-status"></div>
+        <button type="button" class="k-btn k-btn-secondary k-btn-sm" id="k-ev-loc-btn" data-i18n="ev_loc_btn">📍 Check my location</button>
+      </div>
+    </div>
+    <div class="k-ev-step">
+      <div class="k-ev-num">2</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="ev_photo">Take a photo now</div>
+        <div class="k-ev-status" id="k-ev-photo-status" data-i18n="ev_photo_hint">Use the camera — the photo must be taken now, at the spot.</div>
+        <button type="button" class="k-btn k-btn-secondary k-btn-sm" id="k-ev-cam-btn" data-i18n="ev_photo_btn">📷 Open camera</button>
+        <label class="k-ev-fallback" for="k-ev-photo" id="k-ev-file-btn" hidden data-i18n="cam_fallback">Camera not working? Choose a photo</label>
+        <input type="file" id="k-ev-photo" accept="image/*" capture="environment" hidden>
+        <div class="k-photo-preview" id="k-ev-preview"></div>
+      </div>
+    </div>
+    <div class="k-field" id="k-ev-note-wrap" hidden>
+      <label for="k-ev-note" data-i18n="ev_note">What's still wrong? (optional)</label>
+      <textarea id="k-ev-note" class="k-input k-textarea" maxlength="280"></textarea>
+    </div>
+    <button type="button" class="k-btn k-btn-primary" id="k-ev-submit" disabled></button>
+    <div class="k-privacy" data-i18n="ev_privacy">🔒 Your photo and distance from the spot go on the public record under a pseudonym. Your identity and exact position don't.</div>
+  </div>
+</div>
+
+<!-- Put a school on the map / fix its pin -->
+<div class="k-modal" id="k-sf-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-sf-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-sf-title" data-i18n="sf_title">Where is this school?</h3>
+    <p class="k-modal-sub" id="k-sf-sub"></p>
+    <div class="k-ev-status" id="k-sf-loc"></div>
+    <div class="k-sf-mapwrap" id="k-sf-mapwrap" hidden>
+      <div id="k-sf-map" class="k-sf-map"></div>
+      <div class="k-sf-pin" aria-hidden="true">📍</div>
+      <div class="k-sf-hint" data-i18n="sf_drag">Move the map until the pin is on the school gate</div>
+    </div>
+    <button type="button" class="k-btn k-btn-primary" id="k-sf-submit" disabled data-i18n="sf_submit">📍 The school is here</button>
+    <div class="k-privacy" data-i18n="sf_note">Stand at the school gate. The pin goes where most recent visitors stood, so one wrong tap can't move it far.</div>
+  </div>
+</div>
+
+<!-- Adopt the spot where you stand -->
+<div class="k-modal" id="k-ad-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-ad-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-ad-title" data-i18n="ad_title">Look after this spot</h3>
+    <p class="k-modal-sub" data-i18n="ad_sub">Your shop, school, club or family keeps the 50 m around where you are standing clean. The name goes on the public list with how the spot is doing. A shop and a club can look after the same spot together.</p>
+    <div class="k-field">
+      <label for="k-ad-name" data-i18n="ad_name">Public name</label>
+      <input type="text" id="k-ad-name" class="k-input" maxlength="60" data-i18n-placeholder="ad_name_ph" placeholder="e.g. Netaji Youth Club, Station Road shops">
+    </div>
+    <div class="k-field">
+      <label for="k-ad-role" data-i18n="ad_role">Who you are</label>
+      <select id="k-ad-role" class="k-input">
+        <option value="shop" data-i18n="ad_role_shop">Shop or tea stall: we watch it through the day</option>
+        <option value="club" data-i18n="ad_role_club">Para club or puja committee: we guard it and keep it looking good</option>
+        <option value="school" data-i18n="ad_role_school">School</option>
+        <option value="family" data-i18n="ad_role_family">Family or neighbours</option>
+        <option value="other" data-i18n="ad_role_other">Other group</option>
+      </select>
+    </div>
+    <div class="k-ev-status" id="k-ad-loc"></div>
+    <button type="button" class="k-btn k-btn-primary" id="k-ad-submit" disabled data-i18n="ad_submit">🤝 We look after this spot</button>
+    <div class="k-privacy" data-i18n="ad_note">Only the name you type is public, never your account. You can let the spot go any time from the Adopted spots page.</div>
+  </div>
+</div>
+
+<!-- Register a dog feeding spot where you stand -->
+<div class="k-modal" id="k-fd-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-fd-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-fd-title" data-i18n="fd_title">Register a dog feeding spot</h3>
+    <p class="k-modal-sub" data-i18n="fd_sub">Stand where you feed the dogs. Pick a spot away from school gates, play areas, entrances and stairs. A moderator checks it before it goes on the public list.</p>
+    <div class="k-field">
+      <label for="k-fd-name" data-i18n="fd_name">Public name</label>
+      <input type="text" id="k-fd-name" class="k-input" maxlength="60" data-i18n-placeholder="fd_name_ph" placeholder="e.g. Rina di, Station Para feeders">
+    </div>
+    <div class="k-field">
+      <label for="k-fd-time" data-i18n="fd_time">When you feed</label>
+      <input type="text" id="k-fd-time" class="k-input" maxlength="40" data-i18n-placeholder="fd_time_ph" placeholder="e.g. 7 to 7:30 pm">
+    </div>
+    <div class="k-field">
+      <label for="k-fd-dogs" data-i18n="fd_dogs">About how many dogs</label>
+      <input type="number" id="k-fd-dogs" class="k-input" min="1" max="60" inputmode="numeric">
+    </div>
+    <label class="k-field"><input type="checkbox" id="k-fd-abc"> <span data-i18n="fd_abc">I can help catch these dogs for rabies vaccination and sterilisation</span></label>
+    <div class="k-ev-status" id="k-fd-loc"></div>
+    <button type="button" class="k-btn k-btn-primary" id="k-fd-submit" disabled data-i18n="fd_submit">🐕 Register this feeding spot</button>
+    <div class="k-privacy" data-i18n="fd_note">Only the name you type is public, never your account. You promise to clean up after every feed. You can stop any time from the Community dogs page.</div>
+  </div>
+</div>
+
+<!-- Report a snake -->
+<div class="k-modal" id="k-sn-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-sn-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-sn-title" data-i18n="sn_title">Snake seen here</h3>
+    <p class="k-modal-sub" data-i18n="sn_sub">Keep your distance and don't try to catch or kill it. Take one photo from a safe distance; snake rescuers who cover this spot are listed next, to call or message.</p>
+    <div id="k-sn-form">
+      <div class="k-ev-status" id="k-sn-photo-status" data-i18n="sn_photo_hint">Zoom in rather than walking closer.</div>
+      <button type="button" class="k-btn k-btn-secondary k-btn-sm" id="k-sn-cam-btn" data-i18n="ev_photo_btn">📷 Open camera</button>
+      <div class="k-photo-preview" id="k-sn-preview"></div>
+      <div class="k-ev-status" id="k-sn-loc"></div>
+      <div class="k-field">
+        <label for="k-sn-note" data-i18n="sn_note">Where exactly (optional)</label>
+        <input type="text" id="k-sn-note" class="k-input" maxlength="140" data-i18n-placeholder="sn_note_ph" placeholder="e.g. inside the kitchen, under the hand pump">
+      </div>
+      <button type="button" class="k-btn k-btn-primary" id="k-sn-submit" disabled data-i18n="sn_submit">🐍 Send and find a rescuer</button>
+    </div>
+    <div id="k-sn-result" hidden></div>
+  </div>
+</div>
+
+<!-- Register as a snake rescuer -->
+<div class="k-modal" id="k-sr-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-sr-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-sr-title" data-i18n="sr_title">Register as a snake rescuer</h3>
+    <p class="k-modal-sub" data-i18n="sr_sub">Stand where you usually start from. People who report a snake within your range see your name and number. A moderator calls you before you go on the list.</p>
+    <div class="k-field">
+      <label for="k-sr-name" data-i18n="sr_name">Public name</label>
+      <input type="text" id="k-sr-name" class="k-input" maxlength="60" data-i18n-placeholder="sr_name_ph" placeholder="e.g. Bablu Mahato, Hura">
+    </div>
+    <div class="k-field">
+      <label for="k-sr-phone" data-i18n="sr_phone">Mobile number (shown publicly)</label>
+      <input type="tel" id="k-sr-phone" class="k-input" maxlength="16" inputmode="tel" placeholder="98xxxxxxxx">
+    </div>
+    <label class="k-field"><input type="checkbox" id="k-sr-wa" checked> <span data-i18n="sr_wa">This number is on WhatsApp</span></label>
+    <div class="k-field">
+      <label for="k-sr-range" data-i18n="sr_range">How far you can travel (km)</label>
+      <input type="number" id="k-sr-range" class="k-input" min="1" max="50" value="10" inputmode="numeric">
+    </div>
+    <div class="k-field">
+      <label for="k-sr-note" data-i18n="sr_note_l">About you (optional)</label>
+      <input type="text" id="k-sr-note" class="k-input" maxlength="280" data-i18n-placeholder="sr_note_ph" placeholder="e.g. trained by the forest range office, rescuing since 2019">
+    </div>
+    <div class="k-ev-status" id="k-sr-loc"></div>
+    <button type="button" class="k-btn k-btn-primary" id="k-sr-submit" disabled data-i18n="sr_submit">🐍 Register me</button>
+    <div class="k-privacy" data-i18n="sr_privacy">Your name, number and about 1 km of where you start are public; your account is not. You can stop any time from the Snakes page.</div>
+  </div>
+</div>
+
+<!-- Add a puja pandal -->
+<div class="k-modal" id="k-pd-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-pd-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-pd-title" data-i18n="pd_title">Add a puja pandal</h3>
+    <p class="k-modal-sub" data-i18n="pd_sub">Stand at the pandal. A moderator checks it, then it goes on the Swachh Pandal list, which counts the waste reports filed near each pandal during the puja.</p>
+    <div class="k-field">
+      <label for="k-pd-name" data-i18n="pd_name">Pandal name</label>
+      <input type="text" id="k-pd-name" class="k-input" maxlength="80" data-i18n-placeholder="pd_name_ph" placeholder="e.g. Nilkuthidanga Sarbojanin">
+    </div>
+    <div class="k-field">
+      <label for="k-pd-club" data-i18n="pd_club">Club or committee (optional)</label>
+      <input type="text" id="k-pd-club" class="k-input" maxlength="80" data-i18n-placeholder="pd_club_ph" placeholder="e.g. Nilkuthidanga Club">
+    </div>
+    <div class="k-ev-status" id="k-pd-loc"></div>
+    <button type="button" class="k-btn k-btn-primary" id="k-pd-submit" disabled data-i18n="pd_submit">🪔 Add this pandal</button>
+    <div class="k-privacy" data-i18n="pd_note">Only the names you type are public, never your account.</div>
+  </div>
+</div>
+
+<!-- Record a public work's site board (defect liability period) -->
+<div class="k-modal" id="k-wk-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-wk-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-wk-title" data-i18n="wk_title">Record a public work's board</h3>
+    <p class="k-modal-sub" data-i18n="wk_sub">Stand at the board put up at a road, drain or building site. Take a photo of it and copy what it says. A moderator checks the photo before it goes on the public works page.</p>
+    <div class="k-ev-step">
+      <div class="k-ev-num">1</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="wk_photo">Photo of the board</div>
+        <div class="k-ev-status" id="k-wk-photo-status" data-i18n="wk_photo_hint">Every line on the board must be readable. No faces, please.</div>
+        <button type="button" class="k-btn k-btn-secondary k-btn-sm" id="k-wk-cam-btn" data-i18n="ev_photo_btn">📷 Open camera</button>
+        <div class="k-photo-preview" id="k-wk-preview"></div>
+        <div class="k-ev-status" id="k-wk-loc"></div>
+      </div>
+    </div>
+    <div class="k-ev-step">
+      <div class="k-ev-num">2</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="wk_copy">Copy what the board says</div>
+        <input type="text" id="k-wk-name" class="k-input" maxlength="200" autocomplete="off" data-i18n-placeholder="wk_name_ph" placeholder="Name of the work, e.g. Construction of drain from … to …">
+        <input type="text" id="k-wk-agency" class="k-input" maxlength="120" autocomplete="off" data-i18n-placeholder="wk_agency_ph" placeholder="Office or body, e.g. Municipality, PWD, Gram Panchayat">
+        <input type="text" id="k-wk-contractor" class="k-input" maxlength="120" autocomplete="off" data-i18n-placeholder="wk_contractor_ph" placeholder="Contractor, as written (optional)">
+        <input type="text" id="k-wk-order" class="k-input" maxlength="80" autocomplete="off" data-i18n-placeholder="wk_order_ph" placeholder="Work order or tender number (optional)">
+        <input type="text" id="k-wk-cost" class="k-input" maxlength="60" autocomplete="off" data-i18n-placeholder="wk_cost_ph" placeholder="Cost, as written (optional)">
+        <label for="k-wk-done" data-i18n="wk_done_on">Date of completion (if the work is finished)</label>
+        <input type="date" id="k-wk-done" class="k-input">
+        <label for="k-wk-dlp" data-i18n="wk_dlp">Defect liability period</label>
+        <select id="k-wk-dlp" class="k-input">
+          <option value="" data-i18n="wk_dlp_none">Not on the board</option>
+          <option value="0.25" data-i18n="wk_dlp_3m">3 months</option>
+          <option value="0.5" data-i18n="wk_dlp_6m">6 months</option>
+          <option value="1" data-i18n="wk_dlp_1">1 year</option>
+          <option value="2" data-i18n="wk_dlp_2">2 years</option>
+          <option value="3" data-i18n="wk_dlp_3">3 years</option>
+          <option value="5" data-i18n="wk_dlp_5">5 years</option>
+        </select>
+      </div>
+    </div>
+    <button type="button" class="k-btn k-btn-primary" id="k-wk-submit" disabled data-i18n="wk_submit">Send for checking</button>
+    <div class="k-privacy" data-i18n="wk_note">Copy only what is written. Your account is never shown.</div>
+  </div>
+</div>
+
+<!-- Check a school -->
+<div class="k-modal" id="k-sc-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-sc-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-sc-title" data-i18n="sc_title">Check a school</h3>
+    <p class="k-modal-sub" data-i18n="sc_sub">Stand at the school, answer a few questions and take one photo. Your check goes on the school's public record.</p>
+    <div class="k-ev-step">
+      <div class="k-ev-num">1</div>
+      <div class="k-ev-body">
+        <label class="k-ev-label" for="k-sc-block" data-i18n="sc_which">Which school?</label>
+        <div class="k-sc-near" id="k-sc-near" aria-live="polite"></div>
+        <select id="k-sc-block" class="k-input"><option value="" data-i18n="sc_block_pick">Choose the block…</option></select>
+        <input type="search" id="k-sc-find" class="k-input" data-i18n-placeholder="sc_find_ph" placeholder="Type the school or village name" hidden>
+        <select id="k-sc-school" class="k-input" size="6" hidden></select>
+        <div class="k-ev-status" id="k-sc-picked"></div>
+        <button type="button" class="k-linkbtn" id="k-sc-missing" data-i18n="ns_open">School not on the list? Add it</button>
+      </div>
+    </div>
+    <div class="k-ev-step">
+      <div class="k-ev-num">2</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="sc_questions">What did you find?</div>
+        <div class="k-sc-q" id="k-sc-qs"></div>
+      </div>
+    </div>
+    <div class="k-ev-step">
+      <div class="k-ev-num">3</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="ev_loc">Be at the spot</div>
+        <div class="k-ev-status" id="k-sc-loc-status"></div>
+        <button type="button" class="k-btn k-btn-secondary k-btn-sm" id="k-sc-loc-btn" data-i18n="ev_loc_btn">📍 Check my location</button>
+      </div>
+    </div>
+    <div class="k-ev-step">
+      <div class="k-ev-num">4</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="sc_photo">Take one photo at the school now</div>
+        <div class="k-ev-status" id="k-sc-photo-status" data-i18n="sc_photo_hint">Any part you checked: a classroom, the toilets, the water point. It doesn't have to be the gate. No faces, please.</div>
+        <button type="button" class="k-btn k-btn-secondary k-btn-sm" id="k-sc-cam-btn" data-i18n="ev_photo_btn">📷 Open camera</button>
+        <div class="k-photo-preview" id="k-sc-preview"></div>
+      </div>
+    </div>
+    <button type="button" class="k-btn k-btn-primary" id="k-sc-submit" disabled data-i18n="sc_submit">Save the school check</button>
+    <div class="k-privacy"><a href="schools.html" data-i18n="sc_see_all">See every school's checks →</a></div>
+  </div>
+</div>
+
+<!-- Add a school that is missing from the list -->
+<div class="k-modal" id="k-ns-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-ns-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-ns-title" data-i18n="ns_title">Add a missing school</h3>
+    <p class="k-modal-sub" data-i18n="ns_sub">Stand at the school. A moderator checks the photo and finds its UDISE code before it goes on the list.</p>
+    <div class="k-ev-step">
+      <div class="k-ev-num">1</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="ns_photo">Photo of the gate or name board</div>
+        <div class="k-ev-status" id="k-ns-photo-status" data-i18n="ns_photo_hint">The school's name must be readable in the photo. No faces, please.</div>
+        <button type="button" class="k-btn k-btn-secondary k-btn-sm" id="k-ns-cam-btn" data-i18n="ev_photo_btn">📷 Open camera</button>
+        <div class="k-photo-preview" id="k-ns-preview"></div>
+        <div class="k-ev-status" id="k-ns-loc"></div>
+      </div>
+    </div>
+    <div class="k-ev-step">
+      <div class="k-ev-num">2</div>
+      <div class="k-ev-body">
+        <label class="k-ev-label" for="k-ns-name" data-i18n="ns_name">School name, as on the board</label>
+        <input type="text" id="k-ns-name" class="k-input" maxlength="140" autocomplete="off">
+        <select id="k-ns-block" class="k-input"><option value="" data-i18n="sc_block_pick">Choose the block…</option></select>
+        <input type="text" id="k-ns-village" class="k-input" maxlength="80" data-i18n-placeholder="ns_village_ph" placeholder="Village or para">
+        <input type="text" id="k-ns-udise" class="k-input" inputmode="numeric" maxlength="11" data-i18n-placeholder="ns_udise_ph" placeholder="UDISE code, if written on the board (11 digits)">
+      </div>
+    </div>
+    <button type="button" class="k-btn k-btn-primary" id="k-ns-submit" disabled data-i18n="ns_submit">Send for checking</button>
+  </div>
+</div>
+
+<!-- Share a school's report card -->
+<div class="k-modal" id="k-rc-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-rc-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-rc-title" data-i18n="rc_title">Share this school's report card</h3>
+    <p class="k-modal-sub" id="k-rc-school"></p>
+    <div class="k-ev-step">
+      <div class="k-ev-num">1</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="rc_get">Get the report card</div>
+        <p class="k-rc-how" id="k-rc-how"></p>
+        <a class="k-btn k-btn-secondary k-btn-sm" href="https://kys.udiseplus.gov.in/" target="_blank" rel="noopener" data-i18n="rc_open_kys">Open Know Your School ↗</a>
+      </div>
+    </div>
+    <div class="k-ev-step">
+      <div class="k-ev-num">2</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="rc_picture">Add the screenshot or photo of the card</div>
+        <input type="file" id="k-rc-file" accept="image/*" hidden>
+        <button type="button" class="k-btn k-btn-secondary k-btn-sm" id="k-rc-file-btn" data-i18n="rc_pick">🖼️ Choose picture</button>
+        <div class="k-photo-preview" id="k-rc-preview"></div>
+      </div>
+    </div>
+    <div class="k-ev-step">
+      <div class="k-ev-num">3</div>
+      <div class="k-ev-body">
+        <div class="k-ev-label" data-i18n="rc_copy">Copy what the card says</div>
+        <label class="k-rc-field"><span data-i18n="rc_year">Year on the card</span>
+          <select id="k-rc-year" class="k-input"><option value="2025-26">2025-26</option><option value="2024-25" selected>2024-25</option><option value="2023-24">2023-24</option><option value="2022-23">2022-23</option></select></label>
+        <div class="k-rc-nums" id="k-rc-nums"></div>
+        <div class="k-sc-q" id="k-rc-facts"></div>
+      </div>
+    </div>
+    <button type="button" class="k-btn k-btn-primary" id="k-rc-submit" disabled data-i18n="rc_submit">Send for checking</button>
+    <div class="k-privacy" data-i18n="rc_note">A moderator compares the figures with your picture before they go on the schools page. Your name is never shown.</div>
+  </div>
+</div>
+
+<!-- Flag as incorrect -->
+<div class="k-modal" id="k-flag-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-flag-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-flag-title" data-i18n="flag_title">Flag as incorrect</h3>
+    <p class="k-modal-sub" data-i18n="flag_sub">Flags send the report to a moderator. They can't hide or close it.</p>
+    <div class="k-radio-list" id="k-flag-reasons" role="radiogroup"></div>
+    <div class="k-field" id="k-flag-cat-wrap" hidden>
+      <label for="k-flag-cat" data-i18n="flag_right_category">What is it really?</label>
+      <select id="k-flag-cat" class="k-input"></select>
+    </div>
+    <div class="k-field">
+      <label for="k-flag-note" data-i18n="flag_note">Details (optional)</label>
+      <textarea id="k-flag-note" class="k-input k-textarea" maxlength="280"></textarea>
+    </div>
+    <button type="button" class="k-btn k-btn-flag" id="k-flag-submit" disabled data-i18n="flag_submit">Send flag</button>
+  </div>
+</div>
+
+<!-- Your reports (private, device-only history) -->
+<!-- Alerts: the one place to choose what we tell you about -->
+<div class="k-modal" id="k-nt-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-nt-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-nt-title" data-i18n="notify_title">Alerts</h3>
+    <p class="k-modal-sub" data-i18n="notify_sub">Choose what Parishkar tells you about. Every alert can be turned off here.</p>
+    <div class="k-note" id="k-nt-ios" hidden data-i18n="notify_ios">On iPhone, alerts only work from the app on your Home Screen. Tap Share, then “Add to Home Screen”, and open Parishkar from there.</div>
+    <div class="k-note" id="k-nt-nopush" hidden data-i18n="notify_nopush">This browser can't show alerts. The weekly email below still works.</div>
+    <section class="k-nt-item">
+      <h4 data-i18n="notify_near_h">Problems near you</h4>
+      <p data-i18n="notify_near_p">A notification when someone reports a problem within 500 m of where you are now.</p>
+      <button type="button" class="k-btn k-btn-secondary k-alerts-btn" data-alerts hidden>🔔 Alert me about reports near me</button>
+      <div class="k-nt-filter" id="k-nt-filter" hidden>
+        <label class="k-nt-radius"><span data-i18n="notify_radius">How far from you</span>
+          <select id="k-nt-radius"><option value="250">250 m</option><option value="500">500 m</option><option value="1000">1 km</option><option value="2000">2 km</option></select></label>
+        <p class="k-nt-kinds-h" data-i18n="notify_kinds">Only these kinds of problem (tick none for all):</p>
+        <div class="k-nt-kinds" id="k-nt-kinds"></div>
+        <button type="button" class="k-btn k-btn-secondary" id="k-nt-save" data-i18n="notify_save">Save alert choices</button>
+      </div>
+    </section>
+    <section class="k-nt-item">
+      <h4 data-i18n="notify_watch_h">Reports you watch</h4>
+      <p data-i18n="notify_watch_p">Open any report and tap “Watch this report” to hear when it is claimed, fixed or disputed.</p>
+      <p class="k-nt-count" id="k-nt-count" hidden></p>
+    </section>
+    <section class="k-nt-item">
+      <h4 data-i18n="notify_digest_h">Weekly digest by email</h4>
+      <p data-i18n="notify_digest_p">One email every Monday with what was reported and fixed in each ward.</p>
+      <button type="button" class="k-btn k-btn-secondary" data-close data-digest-open data-i18n="notify_digest_btn">✉ Get it by email</button>
+    </section>
+  </div>
+</div>
+
+<div class="k-modal" id="k-cq-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-cq-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-cq-title" data-i18n="cq_title">Check reports near you</h3>
+    <p class="k-modal-sub" data-i18n="cq_sub">Open problems close to you, nearest first. Swipe right if it is still there, left to skip. If it looks fixed, say so with a live photo.</p>
+    <div id="k-cq-body"></div>
+  </div>
+</div>
+
+<div class="k-modal" id="k-mine-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="k-mine-title">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <h3 class="k-modal-title" id="k-mine-title" data-i18n="mine_title">Your reports</h3>
+    <p class="k-modal-sub" data-i18n="mine_sub">Only visible on this device — nothing here identifies you to anyone else.</p>
+    <div class="k-lb-list" id="k-mine-list"></div>
+  </div>
+</div>
+
+<!-- Contact options -->
+<div class="k-modal" id="k-contact-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet" role="dialog" aria-modal="true" aria-label="Contact options">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <div id="k-contact-content"></div>
+  </div>
+</div>
+
+<!-- Representative profile -->
+<div class="k-modal" id="k-rep-modal" aria-hidden="true">
+  <div class="k-modal-backdrop" data-close></div>
+  <div class="k-modal-sheet k-rep-sheet" role="dialog" aria-modal="true" aria-label="Representative">
+    <div class="k-modal-handle"></div>
+    <button type="button" class="k-modal-close" data-close aria-label="Close">✕</button>
+    <div id="k-rep-content"></div>
+  </div>
+</div>
+
+<!-- Live camera for evidence photos: no gallery, no editing step -->
+<div class="k-phone" id="k-phone" hidden role="dialog" aria-modal="true" aria-labelledby="k-phone-title">
+  <div class="k-phone-card">
+    <h2 id="k-phone-title" data-i18n="phone_req_title">Phone camera required</h2>
+    <p data-i18n="phone_req_body">We need a live photo from your phone's rear camera to ensure report authenticity. Desktop uploads are not allowed.</p>
+    <div class="k-phone-qr" id="k-phone-qr"></div>
+    <p class="k-phone-sub" data-i18n="qr_sub">Point a phone camera at this QR code to open the report page.</p>
+    <button type="button" class="k-phone-close" onclick="document.getElementById('k-phone').hidden=true" data-i18n="phone_req_close">Close</button>
+  </div>
+</div>
+<div class="k-cam" id="k-cam" hidden role="dialog" aria-modal="true" aria-labelledby="k-cam-title">
+  <div class="k-cam-top">
+    <div class="k-cam-head">
+      <span id="k-cam-title" data-i18n="cam_title">Take the photo</span>
+      <span class="k-cam-hint" data-i18n="cam_hint">Show the whole problem, and something nearby (a shop, road or landmark) so it can be found.</span>
+    </div>
+    <button type="button" class="k-cam-close" id="k-cam-close" aria-label="Close">✕</button>
+  </div>
+  <div class="k-cam-body">
+    <!-- Square frame: exactly what gets saved (the shot is a centred square). -->
+    <div class="k-cam-stage">
+      <video id="k-cam-video" playsinline muted autoplay></video>
+      <img id="k-cam-still" alt="" hidden>
+      <div class="k-cam-msg" id="k-cam-msg"></div>
+      <div class="k-cam-check" id="k-cam-check" role="status" hidden></div>
+    </div>
+    <div class="k-cam-tools" id="k-cam-tools" hidden>
+      <div class="k-cam-zoom" id="k-cam-zoom" role="group" aria-label="Zoom"></div>
+      <button type="button" class="k-cam-flash" id="k-cam-flash" aria-pressed="false" hidden aria-label="Flash">⚡</button>
+    </div>
+  </div>
+  <div class="k-cam-bar">
+    <button type="button" class="k-cam-shutter" id="k-cam-shutter" aria-label="Take photo" disabled></button>
+    <button type="button" class="k-btn k-btn-secondary" id="k-cam-retake" hidden data-i18n="cam_retake">Retake</button>
+    <button type="button" class="k-btn k-btn-primary" id="k-cam-use" hidden data-i18n="cam_use">Use this photo</button>
+  </div>
+</div>
+
+<div class="k-captcha" id="k-captcha" hidden>
+  <div class="k-captcha-card" role="dialog" aria-modal="true" aria-labelledby="k-captcha-title">
+    <p id="k-captcha-title" data-i18n="captcha_title">Quick check that you're a person</p>
+    <div id="k-captcha-widget"></div>
+  </div>
+</div>
+
+<div class="k-toast" id="k-toast" role="status" aria-live="polite"></div>
+</body>
+</html>

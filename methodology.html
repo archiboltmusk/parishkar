@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="theme-init.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How it works — Parishkar</title>
+<meta name="description" content="What Parishkar does and how it works: how reports are made, who they go to, how fast they should be fixed, how a problem is decided fixed, catches fake cleanups and computes its public numbers, and how anyone can check that the record was not changed.">
+<meta property="og:title" content="How it works — Parishkar">
+<meta property="og:description" content="How reports are made, routed, moderated and confirmed fixed, and how to check the record yourself.">
+<meta property="og:image" content="https://archiboltmusk.github.io/Purulia/og-bengal.jpg">
+<meta property="og:url" content="https://archiboltmusk.github.io/Purulia/methodology.html">
+<link rel="canonical" href="https://archiboltmusk.github.io/Purulia/methodology.html">
+<meta name="theme-color" content="#0a0805">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23DD3333' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%23DD3333' stroke-width='1'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%23DD3333'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500&display=swap"></noscript>
+<link rel="stylesheet" href="kasa.css">
+<link rel="stylesheet" href="legal.css">
+<script src="bug-report.js"></script>
+</head>
+<body>
+
+<nav class="k-nav">
+  <a href="index.html" class="k-nav-logo k-wordmark" aria-label="Parishkar home"><span class="k-mark" aria-hidden="true"></span><span class="k-wordmark-first">Parishkar</span></a>
+  <div class="k-nav-links">
+    <a href="index.html">Home</a>
+    <a href="blueprint.html">Blueprint</a>
+    <a href="kasa.html">Parishkar</a>
+  </div>
+  <div class="k-nav-right">
+    <a href="kasa.html" class="k-nav-cta">Report →</a>
+  </div>
+</nav>
+
+<main class="legal-wrap">
+
+  <a href="kasa.html" class="legal-back">← Back to Parishkar</a>
+
+  <h1 class="legal-title">How it <em>works</em></h1>
+  <div class="legal-meta">Features and rules as of 14 October 2026 · They run on the server, so the website cannot skip them</div>
+
+  <div class="legal-body">
+
+    <div class="legal-callout">
+      <p><strong>Reports are allegations by residents, not verified facts.</strong> What Parishkar adds is a public, checkable record: who reported what, where and when, what happened next, and how many neighbours confirmed it on the spot. This page explains every rule behind the numbers, so anyone can judge them.</p>
+    </div>
+
+    <h2>What you can do on Parishkar</h2>
+    <ul>
+      <li><strong>Report a problem</strong> with one photo from the live camera. The spot, ward or block, and time are filled in for you. Works in English, Bengali and Hindi, and a report taken with no signal is saved and sent later.</li>
+      <li><strong>Say "I saw this too"</strong> on someone else's report, rate whether it looks real and how bad it is, or flag it if it's wrong.</li>
+      <li><strong>Watch a report</strong> to be told when it is claimed, fixed, close to its deadline or past it.</li>
+      <li><strong>Claim a cleanup, or confirm or dispute one</strong>, with a new photo from the spot (section 3).</li>
+      <li><strong>See who answers for it:</strong> each report shows the office responsible, frontline first (section 2).</li>
+      <li><strong>Check a school or a public toilet</strong> on the <a href="schools.html">schools</a> and <a href="toilets.html">toilets</a> pages, and <strong>adopt a spot</strong> you look after on the <a href="adopt.html">adopt</a> page.</li>
+      <li><strong>Follow the numbers</strong> for every ward and block on <a href="analytics.html">public analytics</a>, read the <a href="digest.html">weekly digest</a> or <a href="digest.html#subscribe">get it by email</a>, and download all report data as CSV, or as a GeoJSON map file for QGIS, uMap or OpenStreetMap tools.</li>
+      <li><strong>Suggest a feature</strong> on the <a href="suggest-feature.html">suggestions</a> page. Every change to the site, and what is planned next, is listed under <a href="changelog.html">What's new</a>.</li>
+    </ul>
+
+    <h2>1. What counts as a report</h2>
+    <ul>
+      <li>A report needs a photo and a location inside Purulia district; there is nothing else to fill in. The server places it from its GPS point: inside Purulia municipality it gets a ward (from an approximate ward map, or the ward the reporter picks near the town's edge); elsewhere it gets its CD block (from OpenStreetMap block outlines, simplified to about 150 m). Jhalda and Raghunathpur municipalities have no ward map yet, so reports there count under their block. Its GPS accuracy is recorded; a spot pinned by hand on the map is marked as pinned. Its category defaults to "other" (a repeat of an earlier report keeps that report's category); a moderator can correct it.</li>
+      <li>The photo must be taken with the camera on the Parishkar page; photos can't be picked from the gallery. When the camera opens, the server issues a one-time code that expires after 3 hours and must come back with the photo.</li>
+      <li>One account can file at most 5 reports an hour and 20 a day.</li>
+      <li><strong>Same problem reported again:</strong> a report of the same category within 25 m of an open report from the last 72 hours is linked to the first one instead of counted twice. The second person counts as a witness ("seen by").</li>
+      <li><strong>Came back:</strong> a report within 25 m of a problem marked fixed in the last 60 days is recorded as a recurrence of it.</li>
+      <li><strong>Waiting for a moderator before it appears:</strong> encroachment and illegal-activity reports; photos showing faces or marked as AI-made; photos that arrive without a valid camera code (for example a report saved offline and sent later); text that accuses a named person (for example "thief", "bribe", "corrupt") or contains a phone number, ID number or e-mail address. Reports with abusive words are refused. A photo Google Vision finds unsafe, showing a face, or showing nothing related to a civic problem at all (for example a selfie, a pet or a screenshot) is held the same way — this check runs in the background and can catch a report a few seconds after it first appears, not only at the moment it's filed.</li>
+      <li><strong>Visible but marked "under review":</strong> a report flagged by 3 established accounts (at least 3 days old, with earlier activity on Parishkar) from at least 2 different networks, or rated doubtful by 3 neighbours on the spot, or whose photo's own GPS is more than 500 m from the pin. It stays on the map with that label until a moderator decides.</li>
+      <li>Moderators can publish or hide a report and correct its category. They cannot mark a report fixed. Every moderator action is recorded, with its reason, in the report's public history.</li>
+      <li><strong>Repeated wrong reports:</strong> a person whose reports a moderator hides 3 times within 30 days can't file new reports for the next 30 days. They can still confirm, dispute and flag other people's reports. This is never triggered by the AI check above or by a public flag on its own — only a moderator's own decision to hide a report counts.</li>
+    </ul>
+
+    <h2>2. Where a report goes</h2>
+    <p>Parishkar does not file anything with an office on your behalf. It shows, on every report, which office answers for that kind of problem at that spot, so anyone can take it to the right desk. Roles are named, not individual officers, because officers aren't publicly listed.</p>
+    <ul>
+      <li><strong>Town or village.</strong> When a report is filed, the phone's position decides whether the spot is under <strong>Purulia Municipality</strong> (inside the town's ward map) or a <strong>gram panchayat</strong> (anywhere else in the district, including just outside the town's edge). This is saved with the report as its boundary type and is part of the public data and the CSV download.</li>
+      <li><strong>Who answers, in town.</strong> Municipal work goes up a chain that starts with the frontline section and ends with the Executive Officer and the Chairman. For example, garbage goes Conservancy Supervisor → Sanitary Inspector → Executive Officer → Chairman; broken roads and drains start with the Sub-Assistant Engineer; streetlights with the electrical Sub-Assistant Engineer; water supply with the Water Works section; encroachment with the Building & licence section, and then the Sub-Divisional Officer.</li>
+      <li><strong>Who answers, in a village.</strong> The same municipal kinds of work fall to the Gram Panchayat Pradhan, then the Block Development Officer, then the District Magistrate. Encroachment in a village goes to the Block Land &amp; Land Reforms Officer, the BDO and the SDO.</li>
+      <li><strong>Everywhere.</strong> Some problems belong to the same office in town and village: illegal mining to the land-reforms officers and the District Magistrate, crime to the local police station and up to the SP, anganwadi problems to ICDS, health centres to the block and district health officers, and schools to the school inspectors.</li>
+    </ul>
+
+    <h3 id="laws">Laws and helplines quoted in the problem list</h3>
+    <ul>
+      <li><strong>Pond or water body being filled:</strong> section 17A of the West Bengal Inland Fisheries Act 1984 (added in 1993) bars filling up any water area, or depressed land holding water for at least six months a year, of 5 cottahs (0.035 hectare) or more; sub-section (11) sets up to 2 years in jail or a ₹2 lakh fine, and sub-section (12, added in 1997) makes it cognizable and non-bailable. Text as printed in the Calcutta Gazette: <a href="https://prsindia.org/files/bills_acts/acts_states/west-bengal/1984/1984WB25.pdf" rel="noopener">PRS Legislative Research copy</a>. These reports go to the police chain, like other offences.</li>
+      <li><strong>No drinking water at a railway station:</strong> the Railways take complaints on <a href="https://railmadad.indianrailways.gov.in/" rel="noopener">Rail Madad</a> or helpline 139.</li>
+      <li><strong>Building work with no sanctioned plan on display</strong> goes to the municipality's building section (the block land office in a village). Parishkar quotes no rule for this one: we could not check the text of a display requirement in the West Bengal Municipal Act 1993 or its building rules.</li>
+    </ul>
+
+    <h2>3. How fast it should be fixed</h2>
+    <ul>
+      <li>Every report gets a fix target when it is filed, set by how bad the reporter says it is: <strong>1 day</strong> for critical, <strong>3 days</strong> for severe, <strong>7 days</strong> for minor. The report shows a live clock ("Due in 5h", "2h overdue").</li>
+      <li>People watching a report get an alert when three quarters of its time has passed, and another when it is overdue. Each alert is sent once per report, and only to people who chose to watch it.</li>
+      <li>A report still unresolved after its target counts as overdue in the public numbers.</li>
+    </ul>
+
+    <h2>4. When a problem counts as fixed</h2>
+    <p>No official or party worker can close a report by saying so. A report becomes <strong>fixed</strong> like this:</p>
+    <ol>
+      <li><strong>Claim.</strong> Anyone, officials included, claims the cleanup with a new photo taken with the camera on the Parishkar page (not from the gallery) within 50 m of the spot, with GPS accurate to 60 m or better. The photo must pass the server photo check (reused and copied photos are refused).</li>
+      <li><strong>Confirm.</strong> 3 other people, each within 100 m of the spot with a new photo of their own from the Parishkar camera, confirm it. They must come from at least 2 different internet networks. Their accounts must have existed for at least 3 days before the claim and must have done something else on Parishkar before. One person can confirm the same claimant's cleanups only once a week.</li>
+      <li><strong>Wait.</strong> For 12 daytime hours after the third confirmation, anyone on the spot can still dispute it. Hours between 10 pm and 6 am don't count, so a claim confirmed late at night stays open until the next evening.</li>
+      <li><strong>Fixed.</strong> If nothing stops it, the report becomes fixed. A moderator must clear it first if none of the confirmers has much history (fewer than 3 earlier actions), or if two of the confirmers have confirmed 3 or more other cleanups together in the last 30 days.</li>
+    </ol>
+    <p><strong>Photo fast lane:</strong> for garbage and blocked drains, the server checks the cleanup photo with Google Vision. If it clearly shows no rubbish and its own GPS agrees with the phone, the claim needs only 1 confirmation from the spot instead of 3 (the network, waiting and moderator rules above still apply). If nobody confirms or disputes it within 3 days, it closes on the photo check alone, and the report says so. A report with an earlier thrown-out claim, or any dispute or hold, takes the claim out of the fast lane.</p>
+    <p><strong>Accepted by a moderator:</strong> an admin who has checked the before and after photos can accept a cleanup claim. The report then shows "accepted by a moderator, not confirmed by neighbours" with the admin's reason on its timeline. These are not counted as verified fixes in the numbers on this site.</p>
+    <p><strong>Disputes:</strong> 2 disputes from 2 different networks throw the claim out and reopen the report. 2 disputes from one network send it to a moderator instead. A claim that doesn't get enough confirmations within 14 days expires and the report reopens.</p>
+    <p><strong>Outside Purulia town:</strong> villages have fewer Parishkar users and often only one mobile network, so a cleanup there needs 2 confirmations instead of 3, they may come from the same network, and a claim stays open for 30 days instead of 14. Everything else above still applies: account age, earlier activity, the live camera, the confirmer check and moderator holds. Two disputes, even from one network, throw a village claim out.</p>
+    <p><strong>Repeated failed claims:</strong> a person with 3 claims thrown out within 30 days can't claim cleanups for the next 30 days. They can still report, confirm and dispute. After 3 claims thrown out by a moderator, they can't claim at all.</p>
+    <p><strong>Fake cleanup caught:</strong> a claim thrown out by disputes or by a moderator. It is counted against the ward or block.</p>
+
+    <h2>5. Other checks against faking</h2>
+    <ul>
+      <li>An account's actions are refused if its GPS position jumped faster than 150 km/h since its previous action.</li>
+      <li>The same photo, or a near-copy taken somewhere else, can't be used twice.</li>
+      <li>Photos marked as made or edited with AI can't be used as cleanup evidence.</li>
+      <li>A moderator can void a confirmation or dispute shown to be fake. The vote stops counting, its voter gets a strike, and after 3 strikes that person can no longer confirm or dispute cleanups.</li>
+      <li>Paying or arranging people to confirm a cleanup is against the <a href="terms.html">Terms</a> and may be a criminal offence.</li>
+      <li>Public times are shown to the nearest hour, so a report or confirmation can't be matched to when someone was at a place.</li>
+      <li>Accounts are anonymous. To tell networks apart, the server keeps only a scrambled code of the first part of the internet address, never the address itself.</li>
+    </ul>
+    <p><strong>Limits:</strong> a determined person can still fake a phone's GPS or prepare several accounts in advance. That is why confirmations need several people, several networks, established accounts and a waiting period, and why doubtful cases go to a moderator.</p>
+
+    <h2>6. The public numbers</h2>
+    <table class="legal-table">
+      <thead><tr><th>Number</th><th>How it is computed</th></tr></thead>
+      <tbody>
+        <tr><td>Reports</td><td>Published reports, not counting ones linked to an earlier report of the same problem.</td></tr>
+        <tr><td>Unresolved</td><td>Reports that are open or have a cleanup claim still being checked.</td></tr>
+        <tr><td>Verified fixed</td><td>Reports that became fixed through the process in section 4. Older reports closed before that process existed are not counted.</td></tr>
+        <tr><td>Overdue</td><td>Unresolved past its fix target (1, 3 or 7 days by severity; see section 3).</td></tr>
+        <tr><td>Days to fix</td><td>From the time of the report to the time it became fixed. "Typical" means the median: half of the fixes were faster, half slower.</td></tr>
+        <tr><td>Seen by</td><td>The reporter plus everyone who tapped "I saw this too" or filed the same problem again.</td></tr>
+        <tr><td>Ward ranking</td><td>Wards ordered by unresolved reports; fake cleanups caught are shown next to them.</td></tr>
+      </tbody>
+    </table>
+    <p>The map shows fixed reports for 90 days; they stay in the record and in the downloads. Ward boundaries on the map are approximate. All report data can be downloaded as CSV from the Parishkar page, under the <a href="https://creativecommons.org/licenses/by/4.0/" rel="license noopener" target="_blank">CC BY 4.0</a> licence (photos not included).</p>
+
+    <h2>7. Checking that the record wasn't changed</h2>
+    <p>Every day, a fingerprint (SHA-256) of every public report, event and reply is published in the project's public code repository, and each day's entry is chained to the one before, so no past day can be altered without it showing. Each day's file is also saved to the Internet Archive. The fingerprints contain none of the content, so a report can still be removed for a legal reason, but not quietly rewritten. The <code>record/README.md</code> file in the repository explains how to check a report yourself.</p>
+
+    <h2 id="leaders">8. What leader profiles show</h2>
+    <p>Each MLA's and MP's profile on the map shows public records about their work, side by side, with no grade, score or ranking.</p>
+    <ul>
+      <li><strong>Work in the Lok Sabha</strong> (MPs): attendance, debates, questions and private member's bills in the 18th Lok Sabha, copied from each MP's page on <a href="https://prsindia.org/mptrack" rel="noopener" target="_blank">PRS Legislative Research MP Track</a>, with the West Bengal and all-India averages PRS gives. Ministers and the Speaker do not ask questions or sign the attendance register, so low figures for them mean nothing. There is no comparable public record for the West Bengal Assembly yet, so MLAs have no attendance figures.</li>
+      <li><strong>MP's local area fund</strong>: the official MPLADS figures and works list, via Empowered Indian.</li>
+      <li><strong>Sworn affidavit</strong>: declared assets, liabilities, pending criminal cases and education from the affidavit each winner swore to the Election Commission, as published by the Association for Democratic Reforms on <a href="https://www.myneta.info" rel="noopener" target="_blank">MyNeta</a>, with a link to the full record. Cases are pending, not convictions.</li>
+      <li><strong>Reply from this leader</strong>: anything the leader has said in answer, sent with the date and a link to where they said it. A moderator opens the link before it is shown, and publishes it word for word or not at all.</li>
+    </ul>
+    <p>The figures are refreshed by a script in the code repository (<code>tools/build-wb-record.py</code>, <code>tools/build-wb-affidavits.py</code>), and each one links to its source. If a figure is wrong, use "Suggest a correction" at the foot of the page.</p>
+
+    <h2 id="rti">9. Official complaint numbers and RTI dates</h2>
+    <p>Anyone who files a report on an official channel (CPGRAMS, the state helpline, an RTI application) can add the reference number to the report, and the date they filed it. The number is public; who added it is not. For an RTI, only the phone that added it can later record what happened: answered, refused, no reply or first appeal filed.</p>
+    <ul>
+      <li><strong>RTI reply date</strong>: section 7(1) gives 30 days from the office's receipt of the application; Parishkar counts from the filing date you enter, which is the same day for an online application. Section 7(1) is in the <a href="https://cic.gov.in/sites/default/files/RTI-Act_English.pdf" rel="noopener" target="_blank">Right to Information Act, 2005</a>. If it went to an Assistant Public Information Officer, section 5(2) adds five days; the date shown does not, so check yours.</li>
+      <li><strong>First appeal</strong>: within 30 days of that date, or of the reply if one came, under section 19(1).</li>
+      <li>CPGRAMS and state helpline numbers carry no clock here, because their time limits are set by government guidelines that change, not by an Act.</li>
+    </ul>
+    <p>The case file's "Who answers for this spot" lists offices on record for the spot first, then the bodies the map already knows from its own outlines: the municipality of a mapped ward or town; outside towns, the gram panchayat, the panchayat samiti of the block and the zilla parishad, with their duties from the <a href="https://prsindia.org/files/bills_acts/acts_states/west-bengal/1973/ActNo-41of1973-WB.pdf" rel="noopener" target="_blank">West Bengal Panchayat Act, 1973</a> (sections 19, 109 and 153).</p>
+
+    <h2 id="evidence">10. How records on "The record" are checked</h2>
+    <p><a href="record.html">The record</a> traces one public problem at a time from the official document to whatever was done about it. The rules below are enforced by the database, not left to judgement.</p>
+    <ul>
+      <li><strong>Four different things, kept apart.</strong> That a document exists; what the document says; whether that is true; and where any related case stands. A record can quote an authentic document while the statement in it is still disputed.</li>
+      <li><strong>Every statement has a page.</strong> A statement (an "assertion") is published only with at least one document a moderator has opened and accepted, with the page, paragraph or table it rests on and the exact words. Documents that contradict it are attached and shown next to it, never dropped.</li>
+      <li><strong>Evidence states.</strong> <em>Not yet checked</em>: received, not reviewed. <em>Source checked</em>: the document is real and says this. <em>Corroborated</em>: a second independent record agrees. <em>Disputed</em>: a credible record says otherwise. <em>Not enough evidence</em>: the documents do not settle it. <em>Official or court finding</em>: an authority or court has decided it, within the scope of that finding. <em>Corrected</em>, <em>withdrawn</em>, <em>superseded</em>: as they say. Every change of state stays visible with its date.</li>
+      <li><strong>Case stages are not verdicts.</strong> An FIR means a case was registered, not that anyone is guilty; a charge sheet is not a conviction; an audit remark is not proof of wrongdoing. Each stage is shown only with its date and the document showing it, and earlier stages stay in the history. Closures, acquittals and dismissals are recorded as plainly as anything else.</li>
+      <li><strong>Links between bodies, firms and works.</strong> A link (for example "Municipality awarded work to Firm") is published only with the document that states it and a reason. A link guessed from a shared name, address or place is never published. Sharing a contract or an office does not show that anyone did anything wrong.</li>
+      <li><strong>Money.</strong> Allocated, contract value, reported as paid, independently verified as paid, value of work done, questioned by audit, officially recoverable and actually recovered are different figures. Each is shown with its document and they are never added together.</li>
+      <li><strong>When a problem counts as fixed.</strong> A remedy moves through five stages: identified, verified, referred, response assessed, outcome checked. "Outcome checked" needs a live camera photo, a document or a measurement; an office saying it is done is recorded as what the office says, not as a fix. A checked fix is looked at again after 90 days, and if the problem is back the record says so.</li>
+      <li><strong>People and criminal cases wait for legal review.</strong> Records that name a person in an official role, or a criminal case, need two different moderators to approve, and stay private until the site has had Indian legal advice on publishing them. No person is scored, rated or ranked.</li>
+      <li><strong>Sources.</strong> Official portals are listed on the record page with their state. A source is used only after a moderator has opened it and checked what it publishes and its terms. Documents are collected by hand or through official downloads and APIs; logins, CAPTCHAs and rate limits are never bypassed.</li>
+      <li><strong>Sending something.</strong> Anyone can send a document, a correction or a reply from the record page. Nothing sent is published as it is; you get a reference number to follow it. Only links to public documents are accepted, and personal details are removed before anything is shown.</li>
+      <li><strong>Nothing is quietly rewritten.</strong> Every change is kept in an audit log that cannot be edited. Changing anything already public needs a note, which appears in the record's corrections list.</li>
+    </ul>
+    <p>The counts at the top of the record page are plain counts of published rows in each state. A record being here says nothing about how common a problem is: it reflects which documents someone found and checked.</p>
+
+    <h2 id="corrections">11. Corrections</h2>
+    <p>If you think a number or a rule here is wrong, write to the <a href="grievance.html">Grievance Officer</a>. Corrections are recorded in the affected report's history.</p>
+
+    <h3 id="drawings">The drawings</h3>
+    <p>Mitu the reporter, Bhulu her dog, the speech balloons, the case covers and the ward maps are Parishkar's own drawings, made in the spirit of Hergé's <em>ligne claire</em> (clear line): one even ink line, flat colour, and every panel readable at a glance. They are not Tintin characters (<a href="https://www.tintin.com" rel="noopener" target="_blank">tintin.com</a>). A speech balloon only ever holds words someone actually said or wrote, unedited, and every number they sit beside comes from the record.</p>
+
+    <h2 id="open-data">12. Open data and tools we build on</h2>
+    <p>Parishkar is one small piece of India's civic tech. These are the open projects it uses or learns from; the right column says which.</p>
+    <table class="legal-table">
+      <thead><tr><th>Project</th><th>What it is</th><th>How Parishkar relates</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap</a> (<a href="https://www.openstreetmap.in" rel="noopener" target="_blank">OSM India</a>)</td><td>The free world map anyone can edit, under the ODbL licence.</td><td><strong>Used:</strong> block outlines and the nearest named road on each report. Map tiles are drawn from OSM data. A wrong road or name is fixed on OpenStreetMap itself.</td></tr>
+        <tr><td><a href="https://datameet.org" rel="noopener" target="_blank">DataMeet</a></td><td>A community of open data volunteers that publishes India's ward, constituency and other boundary maps (<a href="https://datameet.org/2017/03/15/home-for-all-our-maps/" rel="noopener" target="_blank">their maps</a>).</td><td><strong>Used:</strong> Kolkata's ward outlines.</td></tr>
+        <tr><td><a href="https://www.fixmystreet.com" rel="noopener" target="_blank">FixMyStreet</a> (mySociety, UK)</td><td>The long-running open-source street problem reporter. It can send reports to councils through the <a href="https://www.open311.org" rel="noopener" target="_blank">Open311</a> standard for civic issue tracking.</td><td><strong>Learned from:</strong> the public map of reports and what happened next. Report data is downloadable as CSV and GeoJSON so other tools can read it.</td></tr>
+        <tr><td><a href="https://digit.org" rel="noopener" target="_blank">DIGIT</a> (eGov Foundation)</td><td>An open-source platform governments use for public services. Its <a href="https://urban.digit.org/products/modules/public-grievances-and-redressal" rel="noopener" target="_blank">grievance module</a> routes complaints to the right department with time limits and escalation.</td><td><strong>Learned from:</strong> fix targets by severity and naming the office responsible (sections 2 and 3). Parishkar is not connected to any government DIGIT system.</td></tr>
+        <tr><td><a href="https://civicdatalab.in" rel="noopener" target="_blank">CivicDataLab</a></td><td>A research lab using open data, tech and design for civic work in India, including public finance, urban, climate and justice data (<a href="https://civicdataspace.in/" rel="noopener" target="_blank">Civic Data Space</a>).</td><td><strong>Reference:</strong> open public finance and urban data for India, for checking what was promised against what was spent.</td></tr>
+        <tr><td><a href="https://opencity.in" rel="noopener" target="_blank">OpenCity</a></td><td>An urban data portal of public data, documents and explainers for India's cities (<a href="https://data.opencity.in" rel="noopener" target="_blank">datasets</a>).</td><td><strong>Reference:</strong> a model for publishing city records openly, and a place to look for urban data before filing an RTI.</td></tr>
+        <tr><td><a href="https://nammayatri.in" rel="noopener" target="_blank">Namma Yatri</a> (Moving Tech)</td><td>An open-source, community-led ride app on the ONDC network; the same team runs Yatri Sathi in Kolkata (<a href="https://www.antler.co/press-releases/namma-yatri-raises-11-million-to-revolutionize-mobility-and-build-seamless-public-transportation" rel="noopener" target="_blank">source</a>).</td><td><strong>Reference:</strong> an example of open public infrastructure built in India and adopted by a West Bengal city.</td></tr>
+      </tbody>
+    </table>
+    <p>More projects like these are listed in the <a href="https://civictech.guide" rel="noopener" target="_blank">Civic Tech Field Guide</a>. If you run one and want Parishkar's data, the CSV and GeoJSON downloads are open under CC BY 4.0.</p>
+
+    <div class="legal-footer-links">
+      <a href="rules.html">Rules</a>
+      <a href="analytics.html">Public analytics</a>
+      <a href="terms.html">Terms of Use</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="grievance.html">Grievance Officer</a>
+      <a href="https://buymeacoffee.com/anupamstorm" target="_blank" rel="noopener">Buy me a coffee</a>
+    </div>
+
+  </div>
+
+</main>
+
+</body>
+</html>
