@@ -21,3 +21,5 @@ bun.lock
 tools/data/.wbme-cache/
 tools/data/.in-cache/
 tools/data/.mp-cache/
+__pycache__/
+*.pyc
